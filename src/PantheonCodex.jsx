@@ -1,27 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>The Cyclical Pantheon</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap" rel="stylesheet">
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { background: #000; }
-      @keyframes slowRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      @keyframes connectionPulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.65; } }
-      @keyframes lightRadiance { 0%, 100% { opacity: 0.05; } 50% { opacity: 0.12; } }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-      @keyframes centerPulse { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.35; } }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script type="text/babel" data-type="module">
-const { useState, useRef } = React;
+import { useState, useRef } from "react";
 
 const gods = [
   {
@@ -165,7 +142,7 @@ const relationships = [
   { type: "conflict", gods: ["Growth", "Eternity"], title: "The Philosophical War", desc: "\"You don't appreciate what exists.\" \"You don't believe in what COULD exist.\" Civil on the surface, deeply bitter underneath." },
 ];
 
-function PantheonCodex() {
+export default function PantheonCodex() {
   const [hoveredGod, setHoveredGod] = useState(null);
   const [selectedGod, setSelectedGod] = useState(null);
   const [expandedGod, setExpandedGod] = useState(null);
@@ -239,13 +216,16 @@ function PantheonCodex() {
       overflow: "auto",
     }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap');
         @keyframes slowRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes connectionPulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.65; } }
         @keyframes lightRadiance { 0%, 100% { opacity: 0.05; } 50% { opacity: 0.12; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes centerPulse { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.35; } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
       `}</style>
 
+      {/* HEADER */}
       <div style={{ textAlign: "center", padding: "36px 20px 8px" }}>
         <h1 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: "28px", fontWeight: 900, color: "#d4af37", letterSpacing: "10px", textTransform: "uppercase", marginBottom: "4px", textShadow: "0 0 50px rgba(212,175,55,0.25)" }}>
           The Pantheon
@@ -255,6 +235,7 @@ function PantheonCodex() {
         </p>
       </div>
 
+      {/* WHEEL */}
       <div style={{ display: "flex", justifyContent: "center", padding: "0 10px" }}>
         <svg width="600" height="600" viewBox="0 0 600 600" style={{ maxWidth: "100%", height: "auto" }}>
           <defs>
@@ -287,6 +268,7 @@ function PantheonCodex() {
             return <g filter="url(#lg)"><defs><linearGradient id={gid} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor={c1} stopOpacity="1"/><stop offset="40%" stopColor="rgba(212,175,55,0.5)"/><stop offset="60%" stopColor="rgba(212,175,55,0.5)"/><stop offset="100%" stopColor={c2} stopOpacity="1"/></linearGradient></defs><line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={`url(#${gid})`} strokeWidth="2.5" style={{animation:"connectionPulse 2.5s ease-in-out infinite"}}/></g>;
           })()}
 
+          {/* Center star */}
           {selectedGod === null ? (
             <text x={centerX} y={centerY+3} textAnchor="middle" dominantBaseline="middle" fill="rgba(212,175,55,0.1)" fontSize="28" fontFamily="'Cinzel Decorative', serif" fontWeight="900">&#10022;</text>
           ) : (() => {
@@ -318,6 +300,7 @@ function PantheonCodex() {
         </svg>
       </div>
 
+      {/* INFO PANEL */}
       {selectedGod !== null && expandedGod === null && (() => {
         const sg = gods[selectedGod];
         const og = gods[(selectedGod + 6) % 12];
@@ -351,6 +334,7 @@ function PantheonCodex() {
 
       {selectedGod === null && <p style={{ textAlign: "center", fontFamily: "'Cinzel', serif", fontSize: "11px", color: "rgba(255,255,255,0.18)", letterSpacing: "4px", textTransform: "uppercase", padding: "0 20px 30px" }}>Touch a god to reveal their opposition</p>}
 
+      {/* DRAWER MODAL */}
       {expandedGod !== null && god && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
@@ -358,6 +342,7 @@ function PantheonCodex() {
           display: "flex", flexDirection: "column",
           animation: "fadeIn 0.3s ease", overflow: "hidden",
         }}>
+          {/* Header */}
           <div style={{ display: "flex", alignItems: "center", padding: "14px 16px", borderBottom: `1px solid ${god.glow}20`, flexShrink: 0, position: "relative" }}>
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", gap: "8px" }}>
               <button onClick={() => navigateGod(-1)} style={{ background: "none", border: "none", color: prevGod.glow, fontFamily: "'Cinzel', serif", fontSize: "11px", letterSpacing: "1px", cursor: "pointer", padding: "6px 12px", textTransform: "uppercase" }}>
@@ -373,8 +358,11 @@ function PantheonCodex() {
             </button>
           </div>
 
+          {/* Scrollable content */}
           <div ref={loreRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px 40px" }}>
             <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+
+              {/* God Header */}
               <div style={{ textAlign: "center", marginBottom: "24px" }}>
                 <div style={{ width: "14px", height: "14px", borderRadius: "50%", background: god.glow, margin: "0 auto 14px", boxShadow: `0 0 25px ${god.glow}50` }} />
                 <h2 style={{ fontFamily: "'Cinzel Decorative', serif", fontSize: "26px", fontWeight: 900, color: god.name === "Light" ? "#FFF" : god.glow, letterSpacing: "7px", textTransform: "uppercase", marginBottom: "8px", textShadow: `0 0 35px ${god.glow}30` }}>
@@ -388,6 +376,7 @@ function PantheonCodex() {
                 </p>
               </div>
 
+              {/* Tabs */}
               <div style={{ display: "flex", justifyContent: "center", gap: "3px", marginBottom: "22px", flexWrap: "wrap" }}>
                 {[
                   { key: "personality", label: "Persona" },
@@ -407,6 +396,7 @@ function PantheonCodex() {
                 ))}
               </div>
 
+              {/* PERSONALITY TAB */}
               {activeTab === "personality" && (
                 <div style={{ animation: "fadeIn 0.3s ease" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
@@ -429,6 +419,7 @@ function PantheonCodex() {
                 </div>
               )}
 
+              {/* LORE TAB */}
               {activeTab === "lore" && (
                 <div style={{ animation: "fadeIn 0.3s ease" }}>
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "16px", lineHeight: "1.9", color: "rgba(255,255,255,0.7)", fontStyle: "italic", borderLeft: `2px solid ${god.glow}30`, paddingLeft: "18px", marginBottom: "22px" }}>
@@ -442,6 +433,7 @@ function PantheonCodex() {
                 </div>
               )}
 
+              {/* BALANCE TAB */}
               {activeTab === "balance" && (
                 <div style={{ animation: "fadeIn 0.3s ease" }}>
                   {[
@@ -461,6 +453,7 @@ function PantheonCodex() {
                 </div>
               )}
 
+              {/* BONDS TAB */}
               {activeTab === "bonds" && (
                 <div style={{ animation: "fadeIn 0.3s ease" }}>
                   <div style={{ marginBottom: "20px", padding: "16px 18px", background: "rgba(212,175,55,0.05)", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "4px" }}>
@@ -495,6 +488,7 @@ function PantheonCodex() {
                 </div>
               )}
 
+              {/* Bottom */}
               <div style={{ textAlign: "center", marginTop: "30px", paddingTop: "20px", borderTop: "1px solid rgba(212,175,55,0.06)" }}>
                 <button onClick={() => { setExpandedGod(null); setSelectedGod(null); }} style={{
                   background: "none", border: "1px solid rgba(212,175,55,0.15)", color: "rgba(212,175,55,0.4)",
@@ -509,6 +503,7 @@ function PantheonCodex() {
         </div>
       )}
 
+      {/* FOOTER */}
       <div style={{ textAlign: "center", padding: "30px 24px 40px", borderTop: "1px solid rgba(212,175,55,0.04)" }}>
         <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "13px", fontStyle: "italic", color: "rgba(255,255,255,0.12)", maxWidth: "450px", margin: "0 auto", lineHeight: "1.8" }}>
           The wheel turns. The gods endure. None are good. None are evil. They simply are &mdash; and in their eternal dance, everything that ever was and ever will be takes shape.
@@ -517,9 +512,3 @@ function PantheonCodex() {
     </div>
   );
 }
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(PantheonCodex));
-    </script>
-  </body>
-</html>
