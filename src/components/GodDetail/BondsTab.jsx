@@ -3,11 +3,17 @@ import {
   getRelationshipsForGod,
   relationshipTypeConfig,
 } from "../../data/relationships";
-import { fonts, godColor, goldAlpha } from "../../styles/theme";
+import { oppositeDynamics } from "../../data/codexLore";
+import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
+import GodNameHighlight from "../shared/GodNameHighlight";
 
-export default function BondsTab({ god, godIndex, isMobile: _isMobile }) {
+export default function BondsTab({ god, godIndex, isMobile }) {
   const oppositeGod = gods[(godIndex + 6) % 12];
   const godRels = getRelationshipsForGod(god.name);
+
+  const pairNames = [god.name, oppositeGod.name].sort();
+  const oppKey = `${pairNames[0]}-${pairNames[1]}`;
+  const oppDesc = oppositeDynamics[oppKey];
 
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
@@ -16,15 +22,15 @@ export default function BondsTab({ god, godIndex, isMobile: _isMobile }) {
         style={{
           marginBottom: "20px",
           padding: "18px",
-          background: "rgba(212,175,55,0.05)",
-          border: "1px solid rgba(212,175,55,0.12)",
+          background: "rgba(212,175,55,0.10)",
+          border: "1px solid rgba(212,175,55,0.18)",
           borderRadius: "4px",
         }}
       >
         <p
           style={{
             fontFamily: fonts.heading,
-            fontSize: "9px",
+            fontSize: "11px",
             letterSpacing: "3px",
             textTransform: "uppercase",
             color: goldAlpha(0.5),
@@ -91,6 +97,20 @@ export default function BondsTab({ god, godIndex, isMobile: _isMobile }) {
             />
           </div>
         </div>
+        {oppDesc && (
+          <p
+            style={{
+              fontFamily: fonts.body,
+              fontSize: isMobile ? "16px" : "15px",
+              lineHeight: "1.8",
+              color: whiteAlpha(0.55),
+              fontStyle: "italic",
+              marginTop: "12px",
+            }}
+          >
+            <GodNameHighlight text={oppDesc} />
+          </p>
+        )}
       </div>
 
       {/* Relationship cards */}
@@ -103,8 +123,8 @@ export default function BondsTab({ god, godIndex, isMobile: _isMobile }) {
             style={{
               marginBottom: "14px",
               padding: "14px 16px",
-              borderLeft: `3px solid ${cfg.color}40`,
-              background: `${cfg.color}06`,
+              borderLeft: `3px solid ${cfg.color}60`,
+              background: `${cfg.color}18`,
               borderRadius: "0 4px 4px 0",
             }}
           >
@@ -120,7 +140,7 @@ export default function BondsTab({ god, godIndex, isMobile: _isMobile }) {
               <span
                 style={{
                   fontFamily: fonts.heading,
-                  fontSize: "8px",
+                  fontSize: "11px",
                   letterSpacing: "2px",
                   textTransform: "uppercase",
                   color: cfg.color,

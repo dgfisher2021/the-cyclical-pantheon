@@ -30,15 +30,15 @@ export default function StatesTab({ god, isMobile }) {
           style={{
             marginBottom: "16px",
             padding: "18px 20px",
-            background: `linear-gradient(135deg, ${state.color}0A 0%, ${state.color}04 100%)`,
-            borderLeft: `3px solid ${state.color}40`,
+            background: `linear-gradient(135deg, ${state.color}1A 0%, ${state.color}0C 100%)`,
+            borderLeft: `3px solid ${state.color}60`,
             borderRadius: "0 4px 4px 0",
           }}
         >
           <p
             style={{
               fontFamily: fonts.heading,
-              fontSize: "9px",
+              fontSize: "11px",
               letterSpacing: "3px",
               textTransform: "uppercase",
               color: state.color,

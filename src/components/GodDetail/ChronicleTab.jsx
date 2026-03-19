@@ -1,4 +1,5 @@
-import { getChaptersForGod } from "../../data/storyMeta";
+import { getChaptersForGod, getReadTime } from "../../data/storyMeta";
+import { storyChapters } from "../../data/storyChapters";
 import { godByName } from "../../data/gods";
 import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
 
@@ -10,7 +11,7 @@ export default function ChronicleTab({ god, onOpenStory }) {
       <p
         style={{
           fontFamily: fonts.heading,
-          fontSize: "9px",
+          fontSize: "11px",
           letterSpacing: "3px",
           textTransform: "uppercase",
           color: goldAlpha(0.4),
@@ -42,8 +43,8 @@ export default function ChronicleTab({ god, onOpenStory }) {
               style={{
                 marginBottom: "12px",
                 padding: "14px 16px",
-                background: goldAlpha(0.03),
-                border: `1px solid ${goldAlpha(0.08)}`,
+                background: goldAlpha(0.1),
+                border: `1px solid ${goldAlpha(0.18)}`,
                 borderRadius: "4px",
                 cursor: "pointer",
                 transition: "background 0.2s",
@@ -62,19 +63,20 @@ export default function ChronicleTab({ god, onOpenStory }) {
                   <span
                     style={{
                       fontFamily: fonts.heading,
-                      fontSize: "8px",
+                      fontSize: "11px",
                       letterSpacing: "2px",
                       textTransform: "uppercase",
                       color: goldAlpha(0.4),
                     }}
                   >
-                    Act {ch.act} {isEpilogue ? "· Epilogue" : `· Ch ${ch.id}`}
+                    Act {ch.act} {isEpilogue ? "· Epilogue" : `· Ch ${ch.id}`} ·{" "}
+                    {getReadTime(ch.id, storyChapters)} min
                   </span>
                 </div>
                 <span
                   style={{
                     fontFamily: fonts.heading,
-                    fontSize: "8px",
+                    fontSize: "11px",
                     letterSpacing: "2px",
                     textTransform: "uppercase",
                     color: godColor(god, 0.5),
@@ -86,7 +88,7 @@ export default function ChronicleTab({ god, onOpenStory }) {
               <p
                 style={{
                   fontFamily: fonts.heading,
-                  fontSize: "13px",
+                  fontSize: "15px",
                   color: whiteAlpha(0.75),
                   fontWeight: 600,
                   letterSpacing: "1px",
@@ -114,7 +116,7 @@ export default function ChronicleTab({ god, onOpenStory }) {
                           key={name}
                           style={{
                             fontFamily: fonts.heading,
-                            fontSize: "7px",
+                            fontSize: "10px",
                             letterSpacing: "1px",
                             color: godColor(g, 0.4),
                             textTransform: "uppercase",

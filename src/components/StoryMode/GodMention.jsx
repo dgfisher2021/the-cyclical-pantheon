@@ -46,7 +46,7 @@ export default function GodMention({ name, onOpenWheel }) {
             bottom: "calc(100% + 8px)",
             left: "50%",
             transform: "translateX(-50%)",
-            width: "220px",
+            width: "250px",
             background: "rgba(8,8,15,0.95)",
             backdropFilter: "blur(12px)",
             border: `1px solid ${god.glow}30`,
@@ -89,7 +89,7 @@ export default function GodMention({ name, onOpenWheel }) {
               <p
                 style={{
                   fontFamily: fonts.heading,
-                  fontSize: "8px",
+                  fontSize: "10px",
                   color: `${god.glow}70`,
                   letterSpacing: "1px",
                 }}
@@ -101,7 +101,7 @@ export default function GodMention({ name, onOpenWheel }) {
           <p
             style={{
               fontFamily: fonts.body,
-              fontSize: "13px",
+              fontSize: "15px",
               fontStyle: "italic",
               color: "rgba(255,255,255,0.5)",
               lineHeight: "1.5",
@@ -117,11 +117,11 @@ export default function GodMention({ name, onOpenWheel }) {
             }}
             style={{
               width: "100%",
-              background: `${god.glow}10`,
-              border: `1px solid ${god.glow}25`,
-              color: godColor(god, 0.7),
+              background: `${god.glow}22`,
+              border: `1px solid ${god.glow}40`,
+              color: godColor(god, 0.75),
               fontFamily: fonts.heading,
-              fontSize: "8px",
+              fontSize: "11px",
               letterSpacing: "2px",
               textTransform: "uppercase",
               padding: "6px 12px",

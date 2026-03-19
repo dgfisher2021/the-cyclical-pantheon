@@ -37,7 +37,7 @@ export default function GodPreview({ god, oppositeGod, onExpand, isMobile }) {
           <p
             style={{
               fontFamily: fonts.heading,
-              fontSize: "9px",
+              fontSize: "11px",
               color: `${god.glow}80`,
               letterSpacing: "2px",
               textTransform: "uppercase",
@@ -72,7 +72,7 @@ export default function GodPreview({ god, oppositeGod, onExpand, isMobile }) {
           <p
             style={{
               fontFamily: fonts.heading,
-              fontSize: "9px",
+              fontSize: "11px",
               color: `${oppositeGod.glow}80`,
               letterSpacing: "2px",
               textTransform: "uppercase",
@@ -86,7 +86,7 @@ export default function GodPreview({ god, oppositeGod, onExpand, isMobile }) {
       <p
         style={{
           fontFamily: fonts.body,
-          fontSize: "14px",
+          fontSize: "16px",
           color: "rgba(255,255,255,0.4)",
           fontStyle: "italic",
           marginBottom: "16px",
@@ -110,11 +110,11 @@ export default function GodPreview({ god, oppositeGod, onExpand, isMobile }) {
       <button
         onClick={onExpand}
         style={{
-          background: `${god.glow}10`,
-          border: `1px solid ${god.glow}30`,
-          color: godColor(god, 0.6),
+          background: `${god.glow}20`,
+          border: `1px solid ${god.glow}45`,
+          color: godColor(god, 0.7),
           fontFamily: fonts.heading,
-          fontSize: "10px",
+          fontSize: "12px",
           letterSpacing: "3px",
           textTransform: "uppercase",
           padding: "10px 24px",

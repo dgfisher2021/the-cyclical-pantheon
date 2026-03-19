@@ -22,7 +22,7 @@ export default function StoryNav({
             <p
               style={{
                 fontFamily: fonts.heading,
-                fontSize: "8px",
+                fontSize: "11px",
                 letterSpacing: "3px",
                 textTransform: "uppercase",
                 color: goldAlpha(0.4),
@@ -60,7 +60,7 @@ export default function StoryNav({
                   <p
                     style={{
                       fontFamily: fonts.heading,
-                      fontSize: "11px",
+                      fontSize: "13px",
                       color: isCurrent
                         ? goldAlpha(0.8)
                         : done
@@ -92,7 +92,7 @@ export default function StoryNav({
           top: 0,
           bottom: 0,
           width: "240px",
-          background: "rgba(0,0,0,0.6)",
+          background: "rgba(4,4,12,0.85)",
           backdropFilter: "blur(12px)",
           borderRight: `1px solid ${goldAlpha(0.08)}`,
           overflowY: "auto",

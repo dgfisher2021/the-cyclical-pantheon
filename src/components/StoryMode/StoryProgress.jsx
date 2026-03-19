@@ -38,12 +38,12 @@ export default function StoryProgress({ completionPct, onBackToWheel }) {
         <button
           onClick={onBackToWheel}
           style={{
-            background: "rgba(0,0,0,0.4)",
+            background: "rgba(0,0,0,0.6)",
             backdropFilter: "blur(8px)",
-            border: `1px solid ${goldAlpha(0.15)}`,
-            color: goldAlpha(0.5),
+            border: `1px solid ${goldAlpha(0.25)}`,
+            color: goldAlpha(0.6),
             fontFamily: fonts.heading,
-            fontSize: "9px",
+            fontSize: "11px",
             letterSpacing: "2px",
             textTransform: "uppercase",
             padding: "6px 14px",

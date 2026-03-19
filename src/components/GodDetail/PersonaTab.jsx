@@ -1,4 +1,5 @@
 import { fonts, godColor } from "../../styles/theme";
+import { extendedPersonality } from "../../data/codexLore";
 import GodNameHighlight from "../shared/GodNameHighlight";
 
 export default function PersonaTab({ god, isMobile }) {
@@ -24,15 +25,15 @@ export default function PersonaTab({ god, isMobile }) {
             key={i}
             style={{
               padding: "14px",
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.14)",
               borderRadius: "3px",
             }}
           >
             <p
               style={{
                 fontFamily: fonts.heading,
-                fontSize: "8px",
+                fontSize: "11px",
                 letterSpacing: "2px",
                 textTransform: "uppercase",
                 color: "rgba(255,255,255,0.4)",
@@ -99,15 +100,15 @@ export default function PersonaTab({ god, isMobile }) {
       <div
         style={{
           padding: "18px",
-          background: "rgba(255,255,255,0.02)",
-          borderLeft: `3px solid ${god.glow}30`,
+          background: "rgba(255,255,255,0.08)",
+          borderLeft: `3px solid ${god.glow}45`,
           borderRadius: "0 4px 4px 0",
         }}
       >
         <p
           style={{
             fontFamily: fonts.heading,
-            fontSize: "9px",
+            fontSize: "11px",
             letterSpacing: "3px",
             textTransform: "uppercase",
             color: `${god.glow}80`,
@@ -124,7 +125,9 @@ export default function PersonaTab({ god, isMobile }) {
             color: "rgba(255,255,255,0.7)",
           }}
         >
-          <GodNameHighlight text={god.personality} />
+          <GodNameHighlight
+            text={extendedPersonality[god.name] || god.personality}
+          />
         </p>
       </div>
     </div>

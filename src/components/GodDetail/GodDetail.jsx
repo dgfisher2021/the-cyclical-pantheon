@@ -8,6 +8,8 @@ import OriginTab from "./OriginTab";
 import StatesTab from "./StatesTab";
 import BondsTab from "./BondsTab";
 import ChronicleTab from "./ChronicleTab";
+import WheelTab from "./WheelTab";
+import DynamicsTab from "./DynamicsTab";
 
 export default function GodDetail({
   godIndex,
@@ -33,6 +35,8 @@ export default function GodDetail({
     { key: "lore", label: "Origin" },
     { key: "balance", label: "States" },
     { key: "bonds", label: "Bonds" },
+    { key: "wheel", label: "Wheel" },
+    { key: "dynamics", label: "Dynamics" },
   ];
 
   if (onOpenStory) {
@@ -229,7 +233,7 @@ export default function GodDetail({
             <p
               style={{
                 fontFamily: fonts.body,
-                fontSize: "14px",
+                fontSize: "16px",
                 color: "rgba(255,255,255,0.4)",
                 fontStyle: "italic",
               }}
@@ -274,6 +278,10 @@ export default function GodDetail({
           {activeTab === "bonds" && (
             <BondsTab god={god} godIndex={godIndex} isMobile={isMobile} />
           )}
+          {activeTab === "wheel" && <WheelTab god={god} isMobile={isMobile} />}
+          {activeTab === "dynamics" && (
+            <DynamicsTab god={god} isMobile={isMobile} />
+          )}
           {activeTab === "chronicle" && onOpenStory && (
             <ChronicleTab god={god} onOpenStory={onOpenStory} />
           )}
@@ -284,11 +292,11 @@ export default function GodDetail({
             <button
               onClick={onClose}
               style={{
-                background: "none",
-                border: `1px solid ${goldAlpha(0.15)}`,
-                color: goldAlpha(0.4),
+                background: goldAlpha(0.08),
+                border: `1px solid ${goldAlpha(0.25)}`,
+                color: goldAlpha(0.5),
                 fontFamily: fonts.heading,
-                fontSize: "9px",
+                fontSize: "11px",
                 letterSpacing: "3px",
                 textTransform: "uppercase",
                 padding: "10px 28px",

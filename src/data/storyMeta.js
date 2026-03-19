@@ -157,6 +157,16 @@ export function getChaptersForGod(name) {
     .filter((ch) => ch.gods.includes(name));
 }
 
+export function getReadTime(chapterId, storyChapters) {
+  const content = storyChapters[chapterId];
+  if (!content) return 0;
+  const words = content.reduce((sum, block) => {
+    if (block.text) return sum + block.text.split(/\s+/).length;
+    return sum;
+  }, 0);
+  return Math.max(1, Math.round(words / 230));
+}
+
 export function getAdjacentChapter(id, dir) {
   const idx = chapterOrder.indexOf(id);
   if (idx === -1) return null;

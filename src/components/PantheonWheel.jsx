@@ -498,11 +498,11 @@ export default function PantheonWheel({
           <button
             onClick={() => onOpenStory(null)}
             style={{
-              background: `${goldAlpha(0.05)}`,
-              border: `1px solid ${goldAlpha(0.15)}`,
-              color: goldAlpha(0.5),
+              background: `${goldAlpha(0.12)}`,
+              border: `1px solid ${goldAlpha(0.25)}`,
+              color: goldAlpha(0.6),
               fontFamily: fonts.heading,
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "3px",
               textTransform: "uppercase",
               padding: "12px 28px",
@@ -517,7 +517,7 @@ export default function PantheonWheel({
         <p
           style={{
             fontFamily: fonts.body,
-            fontSize: "13px",
+            fontSize: "15px",
             fontStyle: "italic",
             color: whiteAlpha(0.12),
             maxWidth: "450px",

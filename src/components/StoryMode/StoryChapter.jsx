@@ -1,5 +1,10 @@
 import { useRef, useEffect } from "react";
-import { chapters, getAdjacentChapter, acts } from "../../data/storyMeta";
+import {
+  chapters,
+  getAdjacentChapter,
+  getReadTime,
+  acts,
+} from "../../data/storyMeta";
 import { storyChapters } from "../../data/storyChapters";
 import { godByName } from "../../data/gods";
 import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
@@ -84,9 +89,9 @@ export default function StoryChapter({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{
-        maxWidth: "680px",
+        maxWidth: "720px",
         margin: "0 auto",
-        padding: isMobile ? "60px 20px 40px" : "60px 24px 40px",
+        padding: isMobile ? "60px 24px 40px" : "60px 40px 40px",
       }}
     >
       {/* Chapter header */}
@@ -94,7 +99,7 @@ export default function StoryChapter({
         <p
           style={{
             fontFamily: fonts.heading,
-            fontSize: "9px",
+            fontSize: "11px",
             letterSpacing: "4px",
             textTransform: "uppercase",
             color: goldAlpha(0.35),
@@ -102,6 +107,18 @@ export default function StoryChapter({
           }}
         >
           Act {chapter.act} &middot; {act?.title}
+        </p>
+        <p
+          style={{
+            fontFamily: fonts.heading,
+            fontSize: "10px",
+            letterSpacing: "3px",
+            textTransform: "uppercase",
+            color: whiteAlpha(0.25),
+            marginBottom: "8px",
+          }}
+        >
+          {getReadTime(chapterId, storyChapters)} min read
         </p>
 
         {isEpilogue && (
@@ -149,14 +166,24 @@ export default function StoryChapter({
         >
           {chapter.title}
         </h2>
+        <p
+          style={{
+            color: goldAlpha(0.2),
+            fontSize: "16px",
+            letterSpacing: "8px",
+            marginBottom: "14px",
+          }}
+        >
+          &#10022;
+        </p>
 
-        {/* Featured gods */}
+        {/* Featured gods with color orbs */}
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "center",
-            gap: "8px",
+            gap: "10px",
             marginBottom: "8px",
           }}
         >
@@ -167,13 +194,26 @@ export default function StoryChapter({
                 <span
                   key={name}
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
                     fontFamily: fonts.heading,
-                    fontSize: "8px",
+                    fontSize: "10px",
                     letterSpacing: "1px",
                     color: godColor(g, 0.5),
                     textTransform: "uppercase",
                   }}
                 >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: g.glow,
+                      boxShadow: `0 0 6px ${g.glow}40`,
+                    }}
+                  />
                   {name}
                 </span>
               )
@@ -183,7 +223,7 @@ export default function StoryChapter({
             <span
               style={{
                 fontFamily: fonts.heading,
-                fontSize: "8px",
+                fontSize: "10px",
                 color: whiteAlpha(0.3),
               }}
             >
@@ -199,7 +239,7 @@ export default function StoryChapter({
       <div
         style={{
           fontFamily: fonts.body,
-          fontSize: isMobile ? "17px" : "18px",
+          fontSize: isMobile ? "18px" : "19px",
           lineHeight: isMobile ? "2.0" : "1.95",
           color: whiteAlpha(0.72),
         }}
@@ -254,6 +294,19 @@ export default function StoryChapter({
         })}
       </div>
 
+      {/* End-of-chapter ornament */}
+      <p
+        style={{
+          textAlign: "center",
+          color: goldAlpha(0.18),
+          fontSize: "14px",
+          letterSpacing: "12px",
+          padding: "24px 0 8px",
+        }}
+      >
+        &#9733; &#9733; &#9733;
+      </p>
+
       <SectionDivider />
 
       {/* Prev / Next navigation */}
@@ -270,21 +323,31 @@ export default function StoryChapter({
           <button
             onClick={() => onSelectChapter(prev.id)}
             style={{
-              background: "none",
-              border: `1px solid ${goldAlpha(0.12)}`,
-              color: goldAlpha(0.45),
+              background: goldAlpha(0.06),
+              border: `1px solid ${goldAlpha(0.18)}`,
+              color: goldAlpha(0.5),
               fontFamily: fonts.heading,
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "2px",
               textTransform: "uppercase",
-              padding: "10px 18px",
+              padding: "14px 20px",
               cursor: "pointer",
               borderRadius: "2px",
               textAlign: "left",
               flex: 1,
-              maxWidth: "200px",
+              maxWidth: "240px",
             }}
           >
+            <span
+              style={{
+                display: "block",
+                fontSize: "10px",
+                color: goldAlpha(0.35),
+                marginBottom: "4px",
+              }}
+            >
+              Previous
+            </span>
             &larr; {prev.title}
           </button>
         ) : (
@@ -294,21 +357,31 @@ export default function StoryChapter({
           <button
             onClick={() => onSelectChapter(next.id)}
             style={{
-              background: `${goldAlpha(0.06)}`,
-              border: `1px solid ${goldAlpha(0.15)}`,
-              color: goldAlpha(0.6),
+              background: goldAlpha(0.1),
+              border: `1px solid ${goldAlpha(0.22)}`,
+              color: goldAlpha(0.65),
               fontFamily: fonts.heading,
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "2px",
               textTransform: "uppercase",
-              padding: "10px 18px",
+              padding: "14px 20px",
               cursor: "pointer",
               borderRadius: "2px",
               textAlign: "right",
               flex: 1,
-              maxWidth: "200px",
+              maxWidth: "240px",
             }}
           >
+            <span
+              style={{
+                display: "block",
+                fontSize: "10px",
+                color: goldAlpha(0.4),
+                marginBottom: "4px",
+              }}
+            >
+              Next Chapter
+            </span>
             {next.title} &rarr;
           </button>
         ) : (

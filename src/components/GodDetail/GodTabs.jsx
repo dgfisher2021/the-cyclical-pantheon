@@ -27,12 +27,12 @@ export default function GodTabs({
           key={tab.key}
           onClick={() => onTabChange(tab.key)}
           style={{
-            background: activeTab === tab.key ? `${god.glow}18` : "transparent",
-            border: `1px solid ${activeTab === tab.key ? `${god.glow}35` : "rgba(255,255,255,0.1)"}`,
+            background: activeTab === tab.key ? `${god.glow}30` : "transparent",
+            border: `1px solid ${activeTab === tab.key ? `${god.glow}50` : "rgba(255,255,255,0.1)"}`,
             color:
               activeTab === tab.key ? godColor(god) : "rgba(255,255,255,0.4)",
             fontFamily: fonts.heading,
-            fontSize: "9px",
+            fontSize: "11px",
             letterSpacing: "2px",
             textTransform: "uppercase",
             padding: isMobile ? "10px 14px" : "7px 14px",
