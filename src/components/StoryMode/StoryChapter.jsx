@@ -107,14 +107,50 @@ function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating })
 }
 
 /**
- * Given narration timing for a paragraph and the current audio time,
- * compute which word index is active (-1 = not started).
+ * Given narration timing (with sub-segments) for a paragraph and the current
+ * audio time, compute which word index is active (-1 = not started).
+ *
+ * Words are distributed across sub-segments proportionally to each segment's
+ * duration, so highlighting stays tight to the actual narration pacing.
  */
 function getActiveWordIndex(paraTime, currentTime, wordCount) {
   if (!paraTime || currentTime < paraTime.start) return -1;
   if (currentTime >= paraTime.end) return wordCount;
-  const progress = (currentTime - paraTime.start) / (paraTime.end - paraTime.start);
-  return Math.floor(progress * wordCount);
+
+  const segs = paraTime.segments;
+  if (!segs || segs.length === 0) {
+    // Fallback: simple linear interpolation across entire paragraph
+    const progress = (currentTime - paraTime.start) / (paraTime.end - paraTime.start);
+    return Math.floor(progress * wordCount);
+  }
+
+  // Distribute words across segments proportional to duration
+  const totalTime = segs.reduce((sum, s) => sum + (s.end - s.start), 0);
+  const segWordCounts = segs.map((s, i) => {
+    const frac = (s.end - s.start) / totalTime;
+    return Math.round(frac * wordCount);
+  });
+  // Fix rounding errors on last segment
+  const assigned = segWordCounts.reduce((a, b) => a + b, 0);
+  segWordCounts[segWordCounts.length - 1] += wordCount - assigned;
+
+  let wordOffset = 0;
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    const wc = segWordCounts[i];
+
+    if (currentTime < seg.start) {
+      // In a gap between segments — hold at the last word of previous segment
+      return wordOffset - 1;
+    }
+    if (currentTime >= seg.start && currentTime < seg.end) {
+      const progress = (currentTime - seg.start) / (seg.end - seg.start);
+      return wordOffset + Math.floor(progress * wc);
+    }
+    wordOffset += wc;
+  }
+
+  return wordCount;
 }
 
 export default function StoryChapter({
