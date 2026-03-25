@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import {
   chapters,
   getAdjacentChapter,
@@ -10,9 +10,16 @@ import { godByName } from "../../data/gods";
 import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
 import SectionDivider from "../shared/SectionDivider";
 import GodMention from "./GodMention";
+import NarrationPlayer from "./NarrationPlayer";
+import { useNarration } from "../../hooks/useNarration";
+import { narrationData } from "../../data/narrationTimestamps";
 
 const GOD_PATTERN =
   /\b(Destruction|Creation|Oblivion|Darkness|Division|Eternity|Growth|Chaos|Light|Order|Unity|Decay)\b/g;
+const GOD_SET = new Set([
+  "Destruction","Creation","Oblivion","Darkness","Division",
+  "Eternity","Growth","Chaos","Light","Order","Unity","Decay",
+]);
 
 function renderTextWithGodMentions(text, onOpenWheel) {
   const parts = [];
@@ -36,6 +43,116 @@ function renderTextWithGodMentions(text, onOpenWheel) {
   return parts;
 }
 
+/**
+ * Split paragraph text into word tokens, preserving whitespace and marking
+ * god-name words so they still render as interactive GodMention components.
+ */
+function tokenizeText(text) {
+  // Split into words keeping whitespace attached to the preceding word
+  const raw = text.match(/\S+\s*/g) || [];
+  return raw.map((tok) => {
+    const word = tok.trimEnd();
+    // Strip punctuation for god-name matching
+    const bare = word.replace(/[^a-zA-Z]/g, "");
+    return { raw: tok, word, isGod: GOD_SET.has(bare), godName: GOD_SET.has(bare) ? bare : null };
+  });
+}
+
+/**
+ * Render a paragraph with word-level narration highlighting.
+ * `activeWordIndex` = how many words into this paragraph the narration has reached.
+ * -1 means paragraph hasn't started, Infinity means fully read.
+ */
+function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating }) {
+  const tokens = useMemo(() => tokenizeText(text), [text]);
+
+  return tokens.map((tok, i) => {
+    const spoken = isNarrating && i <= activeWordIndex;
+    const isCurrent = isNarrating && i === activeWordIndex;
+
+    if (tok.isGod) {
+      return (
+        <span
+          key={i}
+          style={{
+            opacity: isNarrating ? (spoken ? 1 : 0.3) : 1,
+            transition: "opacity 0.15s",
+          }}
+        >
+          <GodMention name={tok.godName} onOpenWheel={onOpenWheel} />
+          {tok.raw.slice(tok.word.length)}
+        </span>
+      );
+    }
+
+    return (
+      <span
+        key={i}
+        style={{
+          color: isCurrent
+            ? "rgba(255,255,255,0.95)"
+            : spoken
+              ? "rgba(255,255,255,0.72)"
+              : isNarrating
+                ? "rgba(255,255,255,0.22)"
+                : undefined,
+          textShadow: isCurrent ? `0 0 8px ${goldAlpha(0.4)}` : undefined,
+          transition: "color 0.15s, text-shadow 0.15s",
+        }}
+      >
+        {tok.raw}
+      </span>
+    );
+  });
+}
+
+/**
+ * Given narration timing (with sub-segments) for a paragraph and the current
+ * audio time, compute which word index is active (-1 = not started).
+ *
+ * Words are distributed across sub-segments proportionally to each segment's
+ * duration, so highlighting stays tight to the actual narration pacing.
+ */
+function getActiveWordIndex(paraTime, currentTime, wordCount) {
+  if (!paraTime || currentTime < paraTime.start) return -1;
+  if (currentTime >= paraTime.end) return wordCount;
+
+  const segs = paraTime.segments;
+  if (!segs || segs.length === 0) {
+    // Fallback: simple linear interpolation across entire paragraph
+    const progress = (currentTime - paraTime.start) / (paraTime.end - paraTime.start);
+    return Math.floor(progress * wordCount);
+  }
+
+  // Distribute words across segments proportional to duration
+  const totalTime = segs.reduce((sum, s) => sum + (s.end - s.start), 0);
+  const segWordCounts = segs.map((s, i) => {
+    const frac = (s.end - s.start) / totalTime;
+    return Math.round(frac * wordCount);
+  });
+  // Fix rounding errors on last segment
+  const assigned = segWordCounts.reduce((a, b) => a + b, 0);
+  segWordCounts[segWordCounts.length - 1] += wordCount - assigned;
+
+  let wordOffset = 0;
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    const wc = segWordCounts[i];
+
+    if (currentTime < seg.start) {
+      // In a gap between segments — hold at the last word of previous segment
+      return wordOffset - 1;
+    }
+    if (currentTime >= seg.start && currentTime < seg.end) {
+      const progress = (currentTime - seg.start) / (seg.end - seg.start);
+      return wordOffset + Math.floor(progress * wc);
+    }
+    wordOffset += wc;
+  }
+
+  return wordCount;
+}
+
 export default function StoryChapter({
   chapterId,
   onSelectChapter,
@@ -50,6 +167,43 @@ export default function StoryChapter({
   const scrollRef = useRef(null);
   const act = acts.find((a) => a.id === chapter.act);
   const isEpilogue = chapterId.startsWith("E");
+
+  // Narration support
+  const narration = narrationData[chapterId];
+  const { playing, currentTime, duration, toggle, seek } = useNarration(
+    narration?.audioSrc || null,
+  );
+  const isNarrating = playing || currentTime > 0;
+
+  // Build paragraph index mapping (skip breaks)
+  const paraIndexMap = useMemo(() => {
+    if (!narration) return null;
+    const map = new Map();
+    let pi = 0;
+    content?.forEach((block, i) => {
+      if (block.type === "paragraph" || block.type === "italic") {
+        map.set(i, pi);
+        pi++;
+      }
+    });
+    return map;
+  }, [narration, content]);
+
+  // Auto-scroll to active paragraph
+  const paraRefs = useRef({});
+  useEffect(() => {
+    if (!isNarrating || !narration) return;
+    const paraTimes = narration.paragraphs;
+    const activeIdx = paraTimes.findIndex(
+      (p) => currentTime >= p.start && currentTime < p.end,
+    );
+    if (activeIdx >= 0 && paraRefs.current[activeIdx]) {
+      paraRefs.current[activeIdx].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [isNarrating, narration, Math.floor(currentTime / 2)]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -235,6 +389,17 @@ export default function StoryChapter({
 
       <SectionDivider />
 
+      {/* Narration player */}
+      {narration && (
+        <NarrationPlayer
+          playing={playing}
+          currentTime={currentTime}
+          duration={duration}
+          onToggle={toggle}
+          onSeek={seek}
+        />
+      )}
+
       {/* Chapter content */}
       <div
         style={{
@@ -248,10 +413,21 @@ export default function StoryChapter({
           if (block.type === "break") {
             return <SectionDivider key={i} />;
           }
+
+          // Check if this paragraph has narration timing
+          const pi = paraIndexMap?.get(i);
+          const paraTime = pi != null ? narration?.paragraphs[pi] : null;
+          const wordCount = block.text ? (block.text.match(/\S+/g) || []).length : 0;
+          const activeWord = isNarrating
+            ? getActiveWordIndex(paraTime, currentTime, wordCount)
+            : -1;
+          const useNarrationRender = isNarrating && paraTime;
+
           if (block.type === "italic") {
             return (
               <p
                 key={i}
+                ref={(el) => { if (pi != null) paraRefs.current[pi] = el; }}
                 style={{
                   fontStyle: "italic",
                   textAlign: "center",
@@ -260,14 +436,27 @@ export default function StoryChapter({
                   fontSize: isMobile ? "15px" : "16px",
                 }}
               >
-                {renderTextWithGodMentions(block.text, onOpenWheel)}
+                {useNarrationRender ? (
+                  <NarrationParagraph
+                    text={block.text}
+                    activeWordIndex={activeWord}
+                    onOpenWheel={onOpenWheel}
+                    isNarrating={true}
+                  />
+                ) : (
+                  renderTextWithGodMentions(block.text, onOpenWheel)
+                )}
               </p>
             );
           }
           // paragraph - first paragraph gets drop cap
           const isFirst = i === 0 || (i === 1 && content[0].type === "break");
           return (
-            <p key={i} style={{ marginBottom: "18px" }}>
+            <p
+              key={i}
+              ref={(el) => { if (pi != null) paraRefs.current[pi] = el; }}
+              style={{ marginBottom: "18px" }}
+            >
               {isFirst && block.text.length > 0 ? (
                 <>
                   <span
@@ -284,8 +473,24 @@ export default function StoryChapter({
                   >
                     {block.text.charAt(0)}
                   </span>
-                  {renderTextWithGodMentions(block.text.slice(1), onOpenWheel)}
+                  {useNarrationRender ? (
+                    <NarrationParagraph
+                      text={block.text.slice(1)}
+                      activeWordIndex={Math.max(-1, activeWord - 1)}
+                      onOpenWheel={onOpenWheel}
+                      isNarrating={true}
+                    />
+                  ) : (
+                    renderTextWithGodMentions(block.text.slice(1), onOpenWheel)
+                  )}
                 </>
+              ) : useNarrationRender ? (
+                <NarrationParagraph
+                  text={block.text}
+                  activeWordIndex={activeWord}
+                  onOpenWheel={onOpenWheel}
+                  isNarrating={true}
+                />
               ) : (
                 renderTextWithGodMentions(block.text, onOpenWheel)
               )}
