@@ -168,12 +168,25 @@ export default function StoryChapter({
   const act = acts.find((a) => a.id === chapter.act);
   const isEpilogue = chapterId.startsWith("E");
 
-  // Narration support
+  // Narration support — multi-part
   const narration = narrationData[chapterId];
-  const { playing, currentTime, duration, toggle, seek } = useNarration(
-    narration?.audioSrc || null,
-  );
-  const isNarrating = playing || currentTime > 0;
+  const narrationParts = narration?.parts || null;
+  const { playing, activePart, currentTime, globalTime, totalDuration, toggle, seek } =
+    useNarration(narrationParts);
+  const isNarrating = playing || globalTime > 0;
+
+  // Build a lookup: paragraph index -> { partIdx, paraIdxInPart, paraTime }
+  const paraTimingMap = useMemo(() => {
+    if (!narrationParts) return null;
+    const map = new Map();
+    for (let pi = 0; pi < narrationParts.length; pi++) {
+      const part = narrationParts[pi];
+      part.paragraphs.forEach((paraTime, j) => {
+        map.set(part.startParagraph + j, { partIdx: pi, paraTime });
+      });
+    }
+    return map;
+  }, [narrationParts]);
 
   // Build paragraph index mapping (skip breaks)
   const paraIndexMap = useMemo(() => {
@@ -192,18 +205,20 @@ export default function StoryChapter({
   // Auto-scroll to active paragraph
   const paraRefs = useRef({});
   useEffect(() => {
-    if (!isNarrating || !narration) return;
-    const paraTimes = narration.paragraphs;
-    const activeIdx = paraTimes.findIndex(
-      (p) => currentTime >= p.start && currentTime < p.end,
-    );
-    if (activeIdx >= 0 && paraRefs.current[activeIdx]) {
-      paraRefs.current[activeIdx].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+    if (!isNarrating || !paraTimingMap) return;
+    // Find the active paragraph across all parts
+    for (const [paraIdx, { partIdx, paraTime }] of paraTimingMap) {
+      if (partIdx === activePart && currentTime >= paraTime.start && currentTime < paraTime.end) {
+        if (paraRefs.current[paraIdx]) {
+          paraRefs.current[paraIdx].scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+        break;
+      }
     }
-  }, [isNarrating, narration, Math.floor(currentTime / 2)]);
+  }, [isNarrating, paraTimingMap, activePart, Math.floor(currentTime / 2)]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -393,8 +408,8 @@ export default function StoryChapter({
       {narration && (
         <NarrationPlayer
           playing={playing}
-          currentTime={currentTime}
-          duration={duration}
+          currentTime={globalTime}
+          duration={totalDuration}
           onToggle={toggle}
           onSeek={seek}
         />
@@ -414,13 +429,17 @@ export default function StoryChapter({
             return <SectionDivider key={i} />;
           }
 
-          // Check if this paragraph has narration timing
+          // Check if this paragraph has narration timing (multi-part)
           const pi = paraIndexMap?.get(i);
-          const paraTime = pi != null ? narration?.paragraphs[pi] : null;
+          const timing = pi != null ? paraTimingMap?.get(pi) : null;
+          const paraTime = timing?.paraTime || null;
+          const isActivePart = timing?.partIdx === activePart;
           const wordCount = block.text ? (block.text.match(/\S+/g) || []).length : 0;
-          const activeWord = isNarrating
+          const activeWord = isNarrating && isActivePart
             ? getActiveWordIndex(paraTime, currentTime, wordCount)
-            : -1;
+            : isNarrating && timing && timing.partIdx < activePart
+              ? wordCount // fully spoken in an earlier part
+              : -1;
           const useNarrationRender = isNarrating && paraTime;
 
           if (block.type === "italic") {
