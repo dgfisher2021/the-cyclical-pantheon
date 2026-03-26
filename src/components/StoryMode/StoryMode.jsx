@@ -20,7 +20,12 @@ function getNextNarratedChapter(chapterId) {
   return null;
 }
 
-export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isMobile }) {
+export default function StoryMode({
+  initialChapterId,
+  autoplay,
+  onOpenWheel,
+  isMobile,
+}) {
   const { progress, markComplete, setLast, isComplete, completionPct } =
     useReadingProgress();
 
@@ -60,8 +65,18 @@ export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isM
   }, [currentChapterId, setLast]);
 
   const {
-    playing, activePart, currentTime, globalTime, totalDuration,
-    playbackRate, toggle, seek, stop, cycleRate, setRate,
+    playing,
+    activePart,
+    currentTime,
+    globalTime,
+    totalDuration,
+    playbackRate,
+    enhancedTimings,
+    toggle,
+    seek,
+    stop,
+    cycleRate,
+    setRate,
   } = useNarration(narrationParts, handleChapterNarrationComplete);
 
   const isNarrating = playing || globalTime > 0;
@@ -120,7 +135,14 @@ export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isM
         isMobile={isMobile}
         narrationState={
           narration
-            ? { isNarrating, activePart, currentTime, paraTimingMap }
+            ? {
+                isNarrating,
+                activePart,
+                currentTime,
+                paraTimingMap,
+                enhancedTimings,
+                playbackRate,
+              }
             : null
         }
       />

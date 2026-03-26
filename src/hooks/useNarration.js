@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useAudioEnergy } from "./useAudioEnergy";
 
 /**
  * Hook that drives multi-part narration audio with sequential playback.
@@ -148,6 +149,8 @@ export function useNarration(parts, onChapterComplete) {
     });
   }, []);
 
+  const { enhancedTimings } = useAudioEnergy(parts);
+
   const totalDuration = durations.reduce((a, b) => a + b, 0);
 
   const elapsedBefore = durations
@@ -208,6 +211,7 @@ export function useNarration(parts, onChapterComplete) {
     globalTime,
     totalDuration,
     playbackRate,
+    enhancedTimings,
     toggle,
     seek,
     stop,

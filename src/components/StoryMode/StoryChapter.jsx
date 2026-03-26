@@ -11,12 +11,23 @@ import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
 import SectionDivider from "../shared/SectionDivider";
 import GodMention from "./GodMention";
 import { narrationData } from "../../data/narrationTimestamps";
+import { computeWordWeights } from "../../utils/syllableEstimator";
 
 const GOD_PATTERN =
   /\b(Destruction|Creation|Oblivion|Darkness|Division|Eternity|Growth|Chaos|Light|Order|Unity|Decay)\b/g;
 const GOD_SET = new Set([
-  "Destruction","Creation","Oblivion","Darkness","Division",
-  "Eternity","Growth","Chaos","Light","Order","Unity","Decay",
+  "Destruction",
+  "Creation",
+  "Oblivion",
+  "Darkness",
+  "Division",
+  "Eternity",
+  "Growth",
+  "Chaos",
+  "Light",
+  "Order",
+  "Unity",
+  "Decay",
 ]);
 
 function renderTextWithGodMentions(text, onOpenWheel) {
@@ -52,7 +63,12 @@ function tokenizeText(text) {
     const word = tok.trimEnd();
     // Strip punctuation for god-name matching
     const bare = word.replace(/[^a-zA-Z]/g, "");
-    return { raw: tok, word, isGod: GOD_SET.has(bare), godName: GOD_SET.has(bare) ? bare : null };
+    return {
+      raw: tok,
+      word,
+      isGod: GOD_SET.has(bare),
+      godName: GOD_SET.has(bare) ? bare : null,
+    };
   });
 }
 
@@ -61,7 +77,12 @@ function tokenizeText(text) {
  * `activeWordIndex` = how many words into this paragraph the narration has reached.
  * -1 means paragraph hasn't started, Infinity means fully read.
  */
-function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating }) {
+function NarrationParagraph({
+  text,
+  activeWordIndex,
+  onOpenWheel,
+  isNarrating,
+}) {
   const tokens = useMemo(() => tokenizeText(text), [text]);
 
   return tokens.map((tok, i) => {
@@ -116,22 +137,22 @@ function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating })
 const HIGHLIGHT_LOOKAHEAD = 0.55;
 
 /**
- * Given word character lengths, compute which word index corresponds to a
- * fractional progress (0–1) using character-weighted distribution.
- * Longer words occupy more time, short words like "a", "the" less.
+ * Given syllable-based word weights, compute which word index corresponds to a
+ * fractional progress (0–1). Heavier words (more syllables, content words)
+ * occupy proportionally more time; light function words advance faster.
  */
-function charWeightedIndex(wordLengths, startIdx, count, progress) {
+function weightedWordIndex(wordWeights, startIdx, count, progress) {
   if (count <= 0) return startIdx;
-  let totalChars = 0;
-  for (let i = startIdx; i < startIdx + count && i < wordLengths.length; i++) {
-    totalChars += wordLengths[i];
+  let totalWeight = 0;
+  for (let i = startIdx; i < startIdx + count && i < wordWeights.length; i++) {
+    totalWeight += wordWeights[i];
   }
-  if (totalChars === 0) return startIdx + Math.floor(progress * count);
-  const targetChars = progress * totalChars;
-  let cumChars = 0;
-  for (let i = startIdx; i < startIdx + count && i < wordLengths.length; i++) {
-    cumChars += wordLengths[i];
-    if (cumChars >= targetChars) return i;
+  if (totalWeight === 0) return startIdx + Math.floor(progress * count);
+  const target = progress * totalWeight;
+  let cum = 0;
+  for (let i = startIdx; i < startIdx + count && i < wordWeights.length; i++) {
+    cum += wordWeights[i];
+    if (cum >= target) return i;
   }
   return startIdx + count - 1;
 }
@@ -144,20 +165,31 @@ function charWeightedIndex(wordLengths, startIdx, count, progress) {
  * an ease-in curve within segments so words at the start of a phrase highlight
  * faster (speech typically accelerates into a phrase then decelerates).
  */
-function getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths) {
-  // Apply look-ahead: pretend we're slightly further in the audio
-  const t = currentTime + HIGHLIGHT_LOOKAHEAD;
+function getActiveWordIndex(
+  paraTime,
+  currentTime,
+  wordCount,
+  wordWeights,
+  enhancedSegments,
+  playbackRate,
+) {
+  // Adaptive look-ahead: scales down at higher playback rates
+  const rate = playbackRate || 1;
+  const lookAhead = HIGHLIGHT_LOOKAHEAD / Math.pow(rate, 0.6);
+  const t = currentTime + lookAhead;
 
   if (!paraTime || t < paraTime.start) return -1;
   if (t >= paraTime.end) return wordCount;
 
-  const segs = paraTime.segments;
+  // Use enhanced (energy-detected) segments if available, else original
+  const segs = enhancedSegments || paraTime.segments;
+  const isFine = !!enhancedSegments;
+
   if (!segs || segs.length === 0) {
-    // Fallback: character-weighted interpolation across entire paragraph
     const linear = (t - paraTime.start) / (paraTime.end - paraTime.start);
     const eased = Math.pow(linear, 0.85);
-    if (!wordLengths) return Math.floor(eased * wordCount);
-    return charWeightedIndex(wordLengths, 0, wordCount, eased);
+    if (!wordWeights) return Math.floor(eased * wordCount);
+    return weightedWordIndex(wordWeights, 0, wordCount, eased);
   }
 
   // Distribute words across segments proportional to duration
@@ -166,7 +198,6 @@ function getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths) {
     const frac = (s.end - s.start) / totalTime;
     return Math.round(frac * wordCount);
   });
-  // Fix rounding errors on last segment
   const assigned = segWordCounts.reduce((a, b) => a + b, 0);
   segWordCounts[segWordCounts.length - 1] += wordCount - assigned;
 
@@ -176,15 +207,14 @@ function getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths) {
     const wc = segWordCounts[i];
 
     if (t < seg.start) {
-      // In a gap between segments — pre-highlight next segment's first word
       return wordOffset > 0 ? wordOffset : 0;
     }
     if (t >= seg.start && t < seg.end) {
       const linear = (t - seg.start) / (seg.end - seg.start);
-      // Ease-in: highlight advances faster at start of segment, slows at end
-      const eased = Math.pow(linear, 0.8);
-      if (wordLengths) {
-        return charWeightedIndex(wordLengths, wordOffset, wc, eased);
+      // Fine segments need less warping (0.88) since boundaries are tighter
+      const eased = Math.pow(linear, isFine ? 0.88 : 0.8);
+      if (wordWeights) {
+        return weightedWordIndex(wordWeights, wordOffset, wc, eased);
       }
       return wordOffset + Math.floor(eased * wc);
     }
@@ -287,26 +317,43 @@ export default function StoryChapter({
     setUserScrolledAway(false);
     if (activeParaRef.current) {
       isAutoScrolling.current = true;
-      activeParaRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => { isAutoScrolling.current = false; }, 1000);
+      activeParaRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      setTimeout(() => {
+        isAutoScrolling.current = false;
+      }, 1000);
     }
   }, []);
 
   useEffect(() => {
     if (!isNarrating || !paraTimingMap || userScrolledAway) return;
     for (const [paraIdx, { partIdx, paraTime }] of paraTimingMap) {
-      if (partIdx === activePart && currentTime >= paraTime.start && currentTime < paraTime.end) {
+      if (
+        partIdx === activePart &&
+        currentTime >= paraTime.start &&
+        currentTime < paraTime.end
+      ) {
         const el = paraRefs.current[paraIdx];
         if (el) {
           activeParaRef.current = el;
           isAutoScrolling.current = true;
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setTimeout(() => { isAutoScrolling.current = false; }, 1000);
+          setTimeout(() => {
+            isAutoScrolling.current = false;
+          }, 1000);
         }
         break;
       }
     }
-  }, [isNarrating, paraTimingMap, activePart, userScrolledAway, Math.floor(currentTime / 2)]);
+  }, [
+    isNarrating,
+    paraTimingMap,
+    activePart,
+    userScrolledAway,
+    Math.floor(currentTime / 2),
+  ]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -514,14 +561,25 @@ export default function StoryChapter({
           const timing = pi != null ? paraTimingMap?.get(pi) : null;
           const paraTime = timing?.paraTime || null;
           const isActivePart = timing?.partIdx === activePart;
-          const words = block.text ? (block.text.match(/\S+/g) || []) : [];
+          const words = block.text ? block.text.match(/\S+/g) || [] : [];
           const wordCount = words.length;
-          const wordLengths = words.map((w) => w.replace(/[^a-zA-Z]/g, "").length || 1);
-          const activeWord = isNarrating && isActivePart
-            ? getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths)
-            : isNarrating && timing && timing.partIdx < activePart
-              ? wordCount // fully spoken in an earlier part
-              : -1;
+          const wordWeights = computeWordWeights(words);
+          const enhancedTimings = narrationState?.enhancedTimings || null;
+          const enhancedSegs =
+            pi != null && enhancedTimings ? enhancedTimings.get(pi) : null;
+          const activeWord =
+            isNarrating && isActivePart
+              ? getActiveWordIndex(
+                  paraTime,
+                  currentTime,
+                  wordCount,
+                  wordWeights,
+                  enhancedSegs,
+                  narrationState?.playbackRate,
+                )
+              : isNarrating && timing && timing.partIdx < activePart
+                ? wordCount
+                : -1;
           const useNarrationRender = isNarrating && paraTime;
 
           const transitionEl = transition ? (
@@ -536,7 +594,14 @@ export default function StoryChapter({
                 justifyContent: "center",
               }}
             >
-              <div style={{ flex: 1, maxWidth: "60px", height: "1px", background: goldAlpha(0.12) }} />
+              <div
+                style={{
+                  flex: 1,
+                  maxWidth: "60px",
+                  height: "1px",
+                  background: goldAlpha(0.12),
+                }}
+              />
               <span
                 style={{
                   fontFamily: fonts.heading,
@@ -549,24 +614,91 @@ export default function StoryChapter({
               >
                 {transition.narrator}
               </span>
-              <div style={{ flex: 1, maxWidth: "60px", height: "1px", background: goldAlpha(0.12) }} />
+              <div
+                style={{
+                  flex: 1,
+                  maxWidth: "60px",
+                  height: "1px",
+                  background: goldAlpha(0.12),
+                }}
+              />
             </div>
           ) : null;
 
           if (block.type === "italic") {
             return (
-              <>{transitionEl}<p
+              <>
+                {transitionEl}
+                <p
+                  key={i}
+                  ref={(el) => {
+                    if (pi != null) paraRefs.current[pi] = el;
+                  }}
+                  style={{
+                    fontStyle: "italic",
+                    textAlign: "center",
+                    color: goldAlpha(0.45),
+                    margin: "24px 0",
+                    fontSize: isMobile ? "15px" : "16px",
+                  }}
+                >
+                  {useNarrationRender ? (
+                    <NarrationParagraph
+                      text={block.text}
+                      activeWordIndex={activeWord}
+                      onOpenWheel={onOpenWheel}
+                      isNarrating={true}
+                    />
+                  ) : (
+                    renderTextWithGodMentions(block.text, onOpenWheel)
+                  )}
+                </p>
+              </>
+            );
+          }
+          // paragraph - first paragraph gets drop cap
+          const isFirst = i === 0 || (i === 1 && content[0].type === "break");
+          return (
+            <>
+              {transitionEl}
+              <p
                 key={i}
-                ref={(el) => { if (pi != null) paraRefs.current[pi] = el; }}
-                style={{
-                  fontStyle: "italic",
-                  textAlign: "center",
-                  color: goldAlpha(0.45),
-                  margin: "24px 0",
-                  fontSize: isMobile ? "15px" : "16px",
+                ref={(el) => {
+                  if (pi != null) paraRefs.current[pi] = el;
                 }}
+                style={{ marginBottom: "18px" }}
               >
-                {useNarrationRender ? (
+                {isFirst && block.text.length > 0 ? (
+                  <>
+                    <span
+                      style={{
+                        float: "left",
+                        fontFamily: fonts.display,
+                        fontSize: "52px",
+                        lineHeight: "0.8",
+                        fontWeight: 700,
+                        color: goldAlpha(0.5),
+                        marginRight: "10px",
+                        marginTop: "6px",
+                      }}
+                    >
+                      {block.text.charAt(0)}
+                    </span>
+                    {useNarrationRender ? (
+                      <NarrationParagraph
+                        text={block.text.slice(1)}
+                        activeWordIndex={Math.max(-1, activeWord - 1)}
+                        onOpenWheel={onOpenWheel}
+                        isNarrating={true}
+                      />
+                    ) : (
+                      renderTextWithGodMentions(
+                        block.text.slice(1),
+                        onOpenWheel,
+                      )
+                    )}
+                  </>
+                ) : useNarrationRender ? (
                   <NarrationParagraph
                     text={block.text}
                     activeWordIndex={activeWord}
@@ -576,55 +708,8 @@ export default function StoryChapter({
                 ) : (
                   renderTextWithGodMentions(block.text, onOpenWheel)
                 )}
-              </p></>
-            );
-          }
-          // paragraph - first paragraph gets drop cap
-          const isFirst = i === 0 || (i === 1 && content[0].type === "break");
-          return (
-            <>{transitionEl}<p
-              key={i}
-              ref={(el) => { if (pi != null) paraRefs.current[pi] = el; }}
-              style={{ marginBottom: "18px" }}
-            >
-              {isFirst && block.text.length > 0 ? (
-                <>
-                  <span
-                    style={{
-                      float: "left",
-                      fontFamily: fonts.display,
-                      fontSize: "52px",
-                      lineHeight: "0.8",
-                      fontWeight: 700,
-                      color: goldAlpha(0.5),
-                      marginRight: "10px",
-                      marginTop: "6px",
-                    }}
-                  >
-                    {block.text.charAt(0)}
-                  </span>
-                  {useNarrationRender ? (
-                    <NarrationParagraph
-                      text={block.text.slice(1)}
-                      activeWordIndex={Math.max(-1, activeWord - 1)}
-                      onOpenWheel={onOpenWheel}
-                      isNarrating={true}
-                    />
-                  ) : (
-                    renderTextWithGodMentions(block.text.slice(1), onOpenWheel)
-                  )}
-                </>
-              ) : useNarrationRender ? (
-                <NarrationParagraph
-                  text={block.text}
-                  activeWordIndex={activeWord}
-                  onOpenWheel={onOpenWheel}
-                  isNarrating={true}
-                />
-              ) : (
-                renderTextWithGodMentions(block.text, onOpenWheel)
-              )}
-            </p></>
+              </p>
+            </>
           );
         })}
       </div>
