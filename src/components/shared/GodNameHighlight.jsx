@@ -1,5 +1,5 @@
 import { godByName } from "../../data/gods";
-import { godColor } from "../../styles/theme";
+import { godColor, godTextStyle } from "../../styles/theme";
 
 const GOD_PATTERN =
   /\b(Destruction|Creation|Oblivion|Darkness|Division|Eternity|Growth|Chaos|Light|Order|Unity|Decay)\b/g;
@@ -34,10 +34,10 @@ export default function GodNameHighlight({
             : undefined
         }
         style={{
-          color: godColor(god, 0.85),
+          color: godTextStyle(god)?.color || godColor(god, 0.85),
           fontWeight: 600,
           cursor: interactive && onGodClick ? "pointer" : "inherit",
-          textShadow: `0 0 12px ${god.glow}30`,
+          textShadow: godTextStyle(god)?.textShadow || `0 0 12px ${god.glow}30`,
           transition: "color 0.2s",
         }}
       >

@@ -508,7 +508,7 @@ export default function PantheonWheel({
                 textTransform: "uppercase",
                 padding: "14px 32px",
                 cursor: "pointer",
-                borderRadius: "2px",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
@@ -529,7 +529,7 @@ export default function PantheonWheel({
                 textTransform: "uppercase",
                 padding: "8px 20px",
                 cursor: "pointer",
-                borderRadius: "2px",
+                borderRadius: "8px",
               }}
             >
               &#9733; Read Without Audio

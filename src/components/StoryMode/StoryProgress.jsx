@@ -46,9 +46,10 @@ export default function StoryProgress({ completionPct, onBackToWheel }) {
             fontSize: "11px",
             letterSpacing: "2px",
             textTransform: "uppercase",
-            padding: "6px 14px",
+            padding: "8px 16px",
             cursor: "pointer",
-            borderRadius: "2px",
+            borderRadius: "8px",
+            minHeight: "36px",
           }}
         >
           &larr; Wheel

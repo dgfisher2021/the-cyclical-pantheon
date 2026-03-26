@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import {
   chapters,
   getAdjacentChapter,
@@ -188,22 +188,82 @@ export default function StoryChapter({
     return map;
   }, [narration, content]);
 
-  // Auto-scroll to active paragraph
+  // Build set of content block indices where a new narrator part begins
+  const partTransitions = useMemo(() => {
+    if (!narration || !paraIndexMap) return new Map();
+    const transitions = new Map(); // contentBlockIdx → part info
+    const parts = narration.parts;
+    for (let p = 1; p < parts.length; p++) {
+      const startPi = parts[p].startParagraph;
+      // Find the content block index for this paragraph index
+      for (const [blockIdx, pi] of paraIndexMap) {
+        if (pi === startPi) {
+          const src = parts[p].audioSrc || "";
+          const prevSrc = parts[p - 1].audioSrc || "";
+          const isFemale = src.includes("female");
+          const isMale = src.includes("male");
+          const wasFemale = prevSrc.includes("female");
+          const wasMale = prevSrc.includes("male");
+          // Only show indicator when narrator gender changes
+          if ((isFemale && wasMale) || (isMale && wasFemale)) {
+            transitions.set(blockIdx, {
+              narrator: isFemale ? "Her voice" : "His voice",
+            });
+          }
+          break;
+        }
+      }
+    }
+    return transitions;
+  }, [narration, paraIndexMap]);
+
+  // Auto-scroll to active paragraph, with user-scroll-ahead detection
   const paraRefs = useRef({});
+  const [userScrolledAway, setUserScrolledAway] = useState(false);
+  const isAutoScrolling = useRef(false);
+  const activeParaRef = useRef(null);
+
+  // Track user scroll — if they scroll away from the active paragraph, pause auto-scroll
   useEffect(() => {
-    if (!isNarrating || !paraTimingMap) return;
+    if (!isNarrating) {
+      setUserScrolledAway(false);
+      return;
+    }
+    const onScroll = () => {
+      if (isAutoScrolling.current) return; // ignore programmatic scrolls
+      if (!activeParaRef.current) return;
+      const rect = activeParaRef.current.getBoundingClientRect();
+      const inView = rect.top > -100 && rect.bottom < window.innerHeight + 100;
+      if (!inView) setUserScrolledAway(true);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isNarrating]);
+
+  const scrollToNarration = useCallback(() => {
+    setUserScrolledAway(false);
+    if (activeParaRef.current) {
+      isAutoScrolling.current = true;
+      activeParaRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => { isAutoScrolling.current = false; }, 1000);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isNarrating || !paraTimingMap || userScrolledAway) return;
     for (const [paraIdx, { partIdx, paraTime }] of paraTimingMap) {
       if (partIdx === activePart && currentTime >= paraTime.start && currentTime < paraTime.end) {
-        if (paraRefs.current[paraIdx]) {
-          paraRefs.current[paraIdx].scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
+        const el = paraRefs.current[paraIdx];
+        if (el) {
+          activeParaRef.current = el;
+          isAutoScrolling.current = true;
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => { isAutoScrolling.current = false; }, 1000);
         }
         break;
       }
     }
-  }, [isNarrating, paraTimingMap, activePart, Math.floor(currentTime / 2)]);
+  }, [isNarrating, paraTimingMap, activePart, userScrolledAway, Math.floor(currentTime / 2)]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -403,6 +463,9 @@ export default function StoryChapter({
             return <SectionDivider key={i} />;
           }
 
+          // Narrator transition indicator
+          const transition = partTransitions.get(i);
+
           // Check if this paragraph has narration timing (multi-part)
           const pi = paraIndexMap?.get(i);
           const timing = pi != null ? paraTimingMap?.get(pi) : null;
@@ -416,9 +479,38 @@ export default function StoryChapter({
               : -1;
           const useNarrationRender = isNarrating && paraTime;
 
+          const transitionEl = transition ? (
+            <div
+              key={`transition-${i}`}
+              style={{
+                textAlign: "center",
+                margin: "20px 0 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ flex: 1, maxWidth: "60px", height: "1px", background: goldAlpha(0.12) }} />
+              <span
+                style={{
+                  fontFamily: fonts.heading,
+                  fontSize: "9px",
+                  letterSpacing: "3px",
+                  textTransform: "uppercase",
+                  color: goldAlpha(0.3),
+                  fontStyle: "italic",
+                }}
+              >
+                {transition.narrator}
+              </span>
+              <div style={{ flex: 1, maxWidth: "60px", height: "1px", background: goldAlpha(0.12) }} />
+            </div>
+          ) : null;
+
           if (block.type === "italic") {
             return (
-              <p
+              <>{transitionEl}<p
                 key={i}
                 ref={(el) => { if (pi != null) paraRefs.current[pi] = el; }}
                 style={{
@@ -439,13 +531,13 @@ export default function StoryChapter({
                 ) : (
                   renderTextWithGodMentions(block.text, onOpenWheel)
                 )}
-              </p>
+              </p></>
             );
           }
           // paragraph - first paragraph gets drop cap
           const isFirst = i === 0 || (i === 1 && content[0].type === "break");
           return (
-            <p
+            <>{transitionEl}<p
               key={i}
               ref={(el) => { if (pi != null) paraRefs.current[pi] = el; }}
               style={{ marginBottom: "18px" }}
@@ -487,7 +579,7 @@ export default function StoryChapter({
               ) : (
                 renderTextWithGodMentions(block.text, onOpenWheel)
               )}
-            </p>
+            </p></>
           );
         })}
       </div>
@@ -530,7 +622,7 @@ export default function StoryChapter({
               textTransform: "uppercase",
               padding: "14px 20px",
               cursor: "pointer",
-              borderRadius: "2px",
+              borderRadius: "8px",
               textAlign: "left",
               flex: 1,
               maxWidth: "240px",
@@ -564,7 +656,7 @@ export default function StoryChapter({
               textTransform: "uppercase",
               padding: "14px 20px",
               cursor: "pointer",
-              borderRadius: "2px",
+              borderRadius: "8px",
               textAlign: "right",
               flex: 1,
               maxWidth: "240px",
@@ -586,6 +678,38 @@ export default function StoryChapter({
           <div />
         )}
       </div>
+
+      {/* "Back to narration" floating button when user scrolls away */}
+      {isNarrating && userScrolledAway && (
+        <button
+          onClick={scrollToNarration}
+          style={{
+            position: "fixed",
+            bottom: isMobile ? "80px" : "76px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(8,8,15,0.92)",
+            backdropFilter: "blur(12px)",
+            border: `1px solid ${goldAlpha(0.3)}`,
+            color: goldAlpha(0.75),
+            fontFamily: fonts.heading,
+            fontSize: "11px",
+            letterSpacing: "2px",
+            textTransform: "uppercase",
+            padding: "10px 20px",
+            cursor: "pointer",
+            borderRadius: "20px",
+            zIndex: 45,
+            boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 15px ${goldAlpha(0.1)}`,
+            animation: "fadeIn 0.3s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <span style={{ fontSize: "14px" }}>&#9654;</span> Back to narration
+        </button>
+      )}
     </div>
   );
 }

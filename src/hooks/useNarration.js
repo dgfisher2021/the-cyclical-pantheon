@@ -140,6 +140,14 @@ export function useNarration(parts, onChapterComplete) {
     });
   }, []);
 
+  const setRate = useCallback((rate) => {
+    const clamped = Math.round(Math.max(0.5, Math.min(2.5, rate)) * 100) / 100;
+    setPlaybackRate(clamped);
+    audiosRef.current.forEach((a) => {
+      a.playbackRate = clamped;
+    });
+  }, []);
+
   const totalDuration = durations.reduce((a, b) => a + b, 0);
 
   const elapsedBefore = durations
@@ -204,5 +212,6 @@ export function useNarration(parts, onChapterComplete) {
     seek,
     stop,
     cycleRate,
+    setRate,
   };
 }

@@ -41,7 +41,7 @@ export default function NarrationPlayer({
           textTransform: "uppercase",
           padding: "8px 16px",
           cursor: "pointer",
-          borderRadius: "2px",
+          borderRadius: "8px",
           flexShrink: 0,
           transition: "all 0.2s",
           display: "flex",
