@@ -13,7 +13,11 @@ export default function App() {
   const isMobile = useIsMobile();
 
   const openStory = useCallback((chapterId) => {
-    setStoryTarget(chapterId ? { chapterId } : null);
+    if (chapterId === "listen") {
+      setStoryTarget({ chapterId: "1.0", autoplay: true });
+    } else {
+      setStoryTarget(chapterId ? { chapterId } : null);
+    }
     setView("story");
   }, []);
 
