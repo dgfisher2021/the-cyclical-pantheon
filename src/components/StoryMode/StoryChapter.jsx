@@ -113,7 +113,7 @@ function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating })
  * so the visual cue arrives at or just before the word is spoken — this matches
  * how karaoke / lyric-sync UIs feel "in time" rather than lagging behind.
  */
-const HIGHLIGHT_LOOKAHEAD = 0.35;
+const HIGHLIGHT_LOOKAHEAD = 0.55;
 
 /**
  * Given word character lengths, compute which word index corresponds to a
@@ -176,8 +176,8 @@ function getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths) {
     const wc = segWordCounts[i];
 
     if (t < seg.start) {
-      // In a gap between segments — hard-reset to segment boundary
-      return wordOffset > 0 ? wordOffset - 1 : -1;
+      // In a gap between segments — pre-highlight next segment's first word
+      return wordOffset > 0 ? wordOffset : 0;
     }
     if (t >= seg.start && t < seg.end) {
       const linear = (t - seg.start) / (seg.end - seg.start);
