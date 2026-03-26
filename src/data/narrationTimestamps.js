@@ -81,7 +81,7 @@ export const narrationData = {
         audioSrc: "./audio/chapter 1.1 female (part 1).mp3",
         startParagraph: 0,
         paragraphs: [
-          { start: 0, end: 4.20, segments: [{ start: 0, end: 4.20 }] },
+          { start: 0, end: 0.50, segments: [{ start: 0, end: 0.50 }] },
           {
             start: 5.05, end: 45.80,
             segments: [
@@ -389,8 +389,8 @@ export const narrationData = {
           { start: 2.55, end: 14.3, segments: [{ start: 2.55, end: 4.05 }, { start: 4.45, end: 6.3 }, { start: 7.15, end: 14.3 }] },
           { start: 14.9, end: 56.5, segments: [{ start: 14.9, end: 16.95 }, { start: 18.3, end: 21.9 }, { start: 22.35, end: 23.7 }, { start: 24.3, end: 28.65 }, { start: 29.35, end: 30.5 }, { start: 31.4, end: 34.3 }, { start: 34.8, end: 36.75 }, { start: 37.25, end: 39.75 }, { start: 40.2, end: 42.75 }, { start: 43.9, end: 49.35 }, { start: 49.75, end: 56.5 }] },
           { start: 57.0, end: 97.5, segments: [{ start: 57.0, end: 59.4 }, { start: 60.3, end: 62.85 }, { start: 63.3, end: 66.1 }, { start: 66.5, end: 69.3 }, { start: 69.8, end: 74.5 }, { start: 75.25, end: 79.35 }, { start: 80.2, end: 82.45 }, { start: 82.9, end: 83.85 }, { start: 84.25, end: 92.3 }, { start: 92.85, end: 95.9 }, { start: 96.5, end: 97.5 }] },
-          { start: 98.3, end: 98.55, segments: [{ start: 98.3, end: 98.55 }] },
-          { start: 98.6, end: 160.15, segments: [{ start: 98.6, end: 100.8 }, { start: 101.4, end: 102.05 }, { start: 102.55, end: 103.2 }, { start: 103.7, end: 104.6 }, { start: 105.2, end: 110.5 }, { start: 111.5, end: 112.75 }, { start: 113.45, end: 114.8 }, { start: 115.25, end: 119.05 }, { start: 119.45, end: 124.2 }, { start: 125.1, end: 127.95 }, { start: 128.35, end: 132.55 }, { start: 132.95, end: 133.6 }, { start: 134.0, end: 138.2 }, { start: 138.65, end: 142.3 }, { start: 142.9, end: 145.5 }, { start: 146.4, end: 146.85 }, { start: 147.75, end: 148.75 }, { start: 149.7, end: 150.9 }, { start: 151.7, end: 156.05 }, { start: 156.65, end: 160.15 }] },
+          { start: 98.3, end: 99.75, segments: [{ start: 98.3, end: 99.75 }] },
+          { start: 100.15, end: 160.15, segments: [{ start: 100.15, end: 101.1 }, { start: 101.4, end: 102.05 }, { start: 102.55, end: 103.2 }, { start: 103.7, end: 104.6 }, { start: 105.2, end: 110.5 }, { start: 111.5, end: 112.75 }, { start: 113.45, end: 114.8 }, { start: 115.25, end: 119.05 }, { start: 119.45, end: 124.2 }, { start: 125.1, end: 127.95 }, { start: 128.35, end: 132.55 }, { start: 132.95, end: 133.6 }, { start: 134.0, end: 138.2 }, { start: 138.65, end: 142.3 }, { start: 142.9, end: 145.5 }, { start: 146.4, end: 146.85 }, { start: 147.75, end: 148.75 }, { start: 149.7, end: 150.9 }, { start: 151.7, end: 156.05 }, { start: 156.65, end: 160.15 }] },
           { start: 160.65, end: 167.75, segments: [{ start: 160.65, end: 162.2 }, { start: 162.65, end: 167.75 }] },
           { start: 168.55, end: 216.35, segments: [{ start: 168.55, end: 169.3 }, { start: 169.75, end: 173.15 }, { start: 173.6, end: 175.1 }, { start: 175.5, end: 176.3 }, { start: 176.8, end: 179.0 }, { start: 180.05, end: 180.9 }, { start: 181.4, end: 183.05 }, { start: 183.65, end: 184.95 }, { start: 185.6, end: 186.6 }, { start: 187.0, end: 189.65 }, { start: 190.2, end: 194.05 }, { start: 194.45, end: 196.0 }, { start: 196.4, end: 198.1 }, { start: 198.65, end: 200.15 }, { start: 200.6, end: 204.5 }, { start: 204.9, end: 206.1 }, { start: 206.7, end: 210.4 }, { start: 210.8, end: 216.35 }] },
           { start: 216.9, end: 263.3, segments: [{ start: 216.9, end: 220.6 }, { start: 221.6, end: 223.4 }, { start: 223.85, end: 227.05 }, { start: 227.45, end: 229.8 }, { start: 230.25, end: 231.65 }, { start: 232.15, end: 240.9 }, { start: 241.65, end: 242.4 }, { start: 242.9, end: 246.15 }, { start: 246.6, end: 252.05 }, { start: 252.6, end: 255.2 }, { start: 255.7, end: 258.8 }, { start: 259.6, end: 261.1 }, { start: 261.75, end: 263.3 }] },
