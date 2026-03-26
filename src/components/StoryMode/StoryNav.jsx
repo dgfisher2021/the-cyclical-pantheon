@@ -52,7 +52,8 @@ export default function StoryNav({
                     borderLeft: isCurrent
                       ? `2px solid ${goldAlpha(0.5)}`
                       : "2px solid transparent",
-                    padding: "8px 16px",
+                    padding: "10px 16px",
+                    minHeight: "44px",
                     cursor: "pointer",
                     transition: "background 0.2s",
                   }}
@@ -135,11 +136,16 @@ export default function StoryNav({
           border: `1px solid ${goldAlpha(0.15)}`,
           color: goldAlpha(0.6),
           fontFamily: fonts.heading,
-          fontSize: "16px",
-          padding: "8px 12px",
+          fontSize: "18px",
+          padding: "10px 14px",
           cursor: "pointer",
-          borderRadius: "2px",
+          borderRadius: "8px",
           lineHeight: 1,
+          minWidth: "44px",
+          minHeight: "44px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         &#9776;

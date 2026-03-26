@@ -119,7 +119,7 @@ export default function GodPreview({ god, oppositeGod, onExpand, isMobile }) {
           textTransform: "uppercase",
           padding: "10px 24px",
           cursor: "pointer",
-          borderRadius: "2px",
+          borderRadius: "8px",
         }}
       >
         &#10022; Open Codex Entry

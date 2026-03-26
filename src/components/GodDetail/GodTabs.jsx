@@ -37,7 +37,7 @@ export default function GodTabs({
             textTransform: "uppercase",
             padding: isMobile ? "10px 14px" : "7px 14px",
             cursor: "pointer",
-            borderRadius: "2px",
+            borderRadius: "6px",
             transition: "all 0.3s",
             whiteSpace: "nowrap",
             flexShrink: 0,

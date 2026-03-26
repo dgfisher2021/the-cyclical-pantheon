@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { godByName } from "../../data/gods";
-import { fonts, godColor } from "../../styles/theme";
+import { fonts, godColor, godTextStyle } from "../../styles/theme";
 
 export default function GodMention({ name, onOpenWheel }) {
   const [showPopover, setShowPopover] = useState(false);
@@ -30,11 +30,11 @@ export default function GodMention({ name, onOpenWheel }) {
           setShowPopover(!showPopover);
         }}
         style={{
-          color: godColor(god, 0.85),
+          color: godTextStyle(god)?.color || godColor(god, 0.85),
           fontWeight: 600,
           cursor: "pointer",
-          textShadow: `0 0 12px ${god.glow}30`,
-          borderBottom: `1px dotted ${god.glow}40`,
+          textShadow: godTextStyle(god)?.textShadow || `0 0 12px ${god.glow}30`,
+          borderBottom: `1px dotted ${god.name === "Darkness" ? "rgba(180,180,195,0.3)" : `${god.glow}40`}`,
         }}
       >
         {name}
@@ -50,7 +50,7 @@ export default function GodMention({ name, onOpenWheel }) {
             background: "rgba(8,8,15,0.95)",
             backdropFilter: "blur(12px)",
             border: `1px solid ${god.glow}30`,
-            borderRadius: "4px",
+            borderRadius: "8px",
             padding: "14px",
             zIndex: 60,
             animation: "fadeIn 0.2s ease",
@@ -124,9 +124,9 @@ export default function GodMention({ name, onOpenWheel }) {
               fontSize: "11px",
               letterSpacing: "2px",
               textTransform: "uppercase",
-              padding: "6px 12px",
+              padding: "10px 12px",
               cursor: "pointer",
-              borderRadius: "2px",
+              borderRadius: "6px",
             }}
           >
             Open Codex
