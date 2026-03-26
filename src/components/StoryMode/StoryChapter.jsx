@@ -116,6 +116,27 @@ function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating })
 const HIGHLIGHT_LOOKAHEAD = 0.35;
 
 /**
+ * Given word character lengths, compute which word index corresponds to a
+ * fractional progress (0–1) using character-weighted distribution.
+ * Longer words occupy more time, short words like "a", "the" less.
+ */
+function charWeightedIndex(wordLengths, startIdx, count, progress) {
+  if (count <= 0) return startIdx;
+  let totalChars = 0;
+  for (let i = startIdx; i < startIdx + count && i < wordLengths.length; i++) {
+    totalChars += wordLengths[i];
+  }
+  if (totalChars === 0) return startIdx + Math.floor(progress * count);
+  const targetChars = progress * totalChars;
+  let cumChars = 0;
+  for (let i = startIdx; i < startIdx + count && i < wordLengths.length; i++) {
+    cumChars += wordLengths[i];
+    if (cumChars >= targetChars) return i;
+  }
+  return startIdx + count - 1;
+}
+
+/**
  * Given narration timing (with sub-segments) for a paragraph and the current
  * audio time, compute which word index is active (-1 = not started).
  *
@@ -123,7 +144,7 @@ const HIGHLIGHT_LOOKAHEAD = 0.35;
  * an ease-in curve within segments so words at the start of a phrase highlight
  * faster (speech typically accelerates into a phrase then decelerates).
  */
-function getActiveWordIndex(paraTime, currentTime, wordCount) {
+function getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths) {
   // Apply look-ahead: pretend we're slightly further in the audio
   const t = currentTime + HIGHLIGHT_LOOKAHEAD;
 
@@ -132,11 +153,11 @@ function getActiveWordIndex(paraTime, currentTime, wordCount) {
 
   const segs = paraTime.segments;
   if (!segs || segs.length === 0) {
-    // Fallback: ease-in interpolation across entire paragraph
+    // Fallback: character-weighted interpolation across entire paragraph
     const linear = (t - paraTime.start) / (paraTime.end - paraTime.start);
-    // Slight ease-in: front-load highlighting so it doesn't feel behind
     const eased = Math.pow(linear, 0.85);
-    return Math.floor(eased * wordCount);
+    if (!wordLengths) return Math.floor(eased * wordCount);
+    return charWeightedIndex(wordLengths, 0, wordCount, eased);
   }
 
   // Distribute words across segments proportional to duration
@@ -155,13 +176,16 @@ function getActiveWordIndex(paraTime, currentTime, wordCount) {
     const wc = segWordCounts[i];
 
     if (t < seg.start) {
-      // In a gap between segments — hold at the last word of previous segment
-      return wordOffset - 1;
+      // In a gap between segments — hard-reset to segment boundary
+      return wordOffset > 0 ? wordOffset - 1 : -1;
     }
     if (t >= seg.start && t < seg.end) {
       const linear = (t - seg.start) / (seg.end - seg.start);
       // Ease-in: highlight advances faster at start of segment, slows at end
       const eased = Math.pow(linear, 0.8);
+      if (wordLengths) {
+        return charWeightedIndex(wordLengths, wordOffset, wc, eased);
+      }
       return wordOffset + Math.floor(eased * wc);
     }
     wordOffset += wc;
@@ -490,9 +514,11 @@ export default function StoryChapter({
           const timing = pi != null ? paraTimingMap?.get(pi) : null;
           const paraTime = timing?.paraTime || null;
           const isActivePart = timing?.partIdx === activePart;
-          const wordCount = block.text ? (block.text.match(/\S+/g) || []).length : 0;
+          const words = block.text ? (block.text.match(/\S+/g) || []) : [];
+          const wordCount = words.length;
+          const wordLengths = words.map((w) => w.replace(/[^a-zA-Z]/g, "").length || 1);
           const activeWord = isNarrating && isActivePart
-            ? getActiveWordIndex(paraTime, currentTime, wordCount)
+            ? getActiveWordIndex(paraTime, currentTime, wordCount, wordLengths)
             : isNarrating && timing && timing.partIdx < activePart
               ? wordCount // fully spoken in an earlier part
               : -1;
