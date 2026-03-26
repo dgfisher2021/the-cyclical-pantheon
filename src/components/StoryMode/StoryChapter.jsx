@@ -88,11 +88,11 @@ function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating })
         key={i}
         style={{
           color: isCurrent
-            ? "rgba(255,255,255,0.95)"
+            ? "rgba(255,255,255,1)"
             : spoken
-              ? "rgba(255,255,255,0.72)"
+              ? "rgba(255,255,255,0.85)"
               : isNarrating
-                ? "rgba(255,255,255,0.22)"
+                ? "rgba(255,255,255,0.25)"
                 : undefined,
           textShadow: isCurrent ? `0 0 8px ${goldAlpha(0.4)}` : undefined,
           transition: "color 0.15s, text-shadow 0.15s",
@@ -395,7 +395,7 @@ export default function StoryChapter({
           fontFamily: fonts.body,
           fontSize: isMobile ? "18px" : "19px",
           lineHeight: isMobile ? "2.0" : "1.95",
-          color: whiteAlpha(0.72),
+          color: whiteAlpha(0.85),
         }}
       >
         {content.map((block, i) => {

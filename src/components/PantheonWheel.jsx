@@ -495,24 +495,46 @@ export default function PantheonWheel({
         }}
       >
         {onOpenStory && (
-          <button
-            onClick={() => onOpenStory(null)}
-            style={{
-              background: `${goldAlpha(0.12)}`,
-              border: `1px solid ${goldAlpha(0.25)}`,
-              color: goldAlpha(0.6),
-              fontFamily: fonts.heading,
-              fontSize: "12px",
-              letterSpacing: "3px",
-              textTransform: "uppercase",
-              padding: "12px 28px",
-              cursor: "pointer",
-              borderRadius: "2px",
-              marginBottom: "16px",
-            }}
-          >
-            &#9733; Read the Story
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+            <button
+              onClick={() => onOpenStory("listen")}
+              style={{
+                background: `${goldAlpha(0.18)}`,
+                border: `1px solid ${goldAlpha(0.35)}`,
+                color: goldAlpha(0.85),
+                fontFamily: fonts.heading,
+                fontSize: "13px",
+                letterSpacing: "3px",
+                textTransform: "uppercase",
+                padding: "14px 32px",
+                cursor: "pointer",
+                borderRadius: "2px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                transition: "all 0.3s",
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>&#9654;</span> Listen to the Story
+            </button>
+            <button
+              onClick={() => onOpenStory(null)}
+              style={{
+                background: "transparent",
+                border: `1px solid ${goldAlpha(0.15)}`,
+                color: goldAlpha(0.45),
+                fontFamily: fonts.heading,
+                fontSize: "10px",
+                letterSpacing: "3px",
+                textTransform: "uppercase",
+                padding: "8px 20px",
+                cursor: "pointer",
+                borderRadius: "2px",
+              }}
+            >
+              &#9733; Read Without Audio
+            </button>
+          </div>
         )}
         <p
           style={{

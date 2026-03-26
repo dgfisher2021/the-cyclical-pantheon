@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { chapterOrder } from "../../data/storyMeta";
 import { narrationData } from "../../data/narrationTimestamps";
 import { useReadingProgress } from "../../hooks/useReadingProgress";
@@ -20,7 +20,7 @@ function getNextNarratedChapter(chapterId) {
   return null;
 }
 
-export default function StoryMode({ initialChapterId, onOpenWheel, isMobile }) {
+export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isMobile }) {
   const { progress, markComplete, setLast, isComplete, completionPct } =
     useReadingProgress();
 
@@ -65,6 +65,15 @@ export default function StoryMode({ initialChapterId, onOpenWheel, isMobile }) {
   } = useNarration(narrationParts, handleChapterNarrationComplete);
 
   const isNarrating = playing || globalTime > 0;
+
+  // Autoplay on mount if requested (e.g. "Listen to the Story" from wheel)
+  const [didAutoplay, setDidAutoplay] = useState(false);
+  useEffect(() => {
+    if (autoplay && !didAutoplay && narrationParts && totalDuration > 0) {
+      toggle();
+      setDidAutoplay(true);
+    }
+  }, [autoplay, didAutoplay, narrationParts, totalDuration, toggle]);
 
   // Build timing map for current chapter
   const paraTimingMap = useMemo(() => {

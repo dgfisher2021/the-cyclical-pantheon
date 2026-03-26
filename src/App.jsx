@@ -13,7 +13,11 @@ export default function App() {
   const isMobile = useIsMobile();
 
   const openStory = useCallback((chapterId) => {
-    setStoryTarget(chapterId ? { chapterId } : null);
+    if (chapterId === "listen") {
+      setStoryTarget({ chapterId: "1.0", autoplay: true });
+    } else {
+      setStoryTarget(chapterId ? { chapterId } : null);
+    }
     setView("story");
   }, []);
 
@@ -75,11 +79,14 @@ export default function App() {
           />
         )}
         {view === "story" && (
+          <div style={{ animation: "fadeIn 0.5s ease" }}>
           <StoryMode
             initialChapterId={storyTarget?.chapterId || null}
+            autoplay={storyTarget?.autoplay || false}
             onOpenWheel={openWheel}
             isMobile={isMobile}
           />
+          </div>
         )}
       </div>
     </div>
