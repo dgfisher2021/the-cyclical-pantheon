@@ -152,7 +152,7 @@ export default function NarrationBar({
         background: "rgba(8,8,15,0.92)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-        borderTop: `1px solid ${goldAlpha(0.12)}`,
+        borderTop: `1px solid ${goldAlpha(0.25)}`,
       }}
     >
       {/* Progress bar — larger touch target wrapping thin visual bar */}
@@ -174,14 +174,14 @@ export default function NarrationBar({
         <div
           style={{
             height: "3px",
-            background: goldAlpha(0.08),
+            background: goldAlpha(0.15),
           }}
         >
           <div
             style={{
               height: "100%",
               width: `${pct}%`,
-              background: goldAlpha(0.5),
+              background: goldAlpha(0.7),
               transition: "width 0.1s linear",
             }}
           />
@@ -203,7 +203,7 @@ export default function NarrationBar({
           style={{
             background: "none",
             border: "none",
-            color: goldAlpha(playing ? 0.8 : 0.5),
+            color: goldAlpha(playing ? 0.9 : 0.65),
             fontSize: "22px",
             cursor: "pointer",
             padding: "6px",
@@ -224,10 +224,10 @@ export default function NarrationBar({
           <p
             style={{
               fontFamily: fonts.heading,
-              fontSize: "10px",
+              fontSize: "11px",
               letterSpacing: "2px",
               textTransform: "uppercase",
-              color: goldAlpha(0.55),
+              color: goldAlpha(0.8),
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -241,8 +241,8 @@ export default function NarrationBar({
         <span
           style={{
             fontFamily: fonts.heading,
-            fontSize: "10px",
-            color: goldAlpha(0.35),
+            fontSize: "11px",
+            color: goldAlpha(0.6),
             letterSpacing: "1px",
             flexShrink: 0,
           }}
@@ -260,7 +260,7 @@ export default function NarrationBar({
             style={{
               background: playbackRate !== 1 ? goldAlpha(0.12) : "none",
               border: `1px solid ${playbackRate !== 1 ? goldAlpha(0.25) : "transparent"}`,
-              color: playbackRate !== 1 ? goldAlpha(0.7) : goldAlpha(0.35),
+              color: playbackRate !== 1 ? goldAlpha(0.85) : goldAlpha(0.55),
               fontFamily: fonts.heading,
               fontSize: "11px",
               letterSpacing: "1px",
@@ -290,7 +290,7 @@ export default function NarrationBar({
           style={{
             background: "none",
             border: "none",
-            color: whiteAlpha(0.25),
+            color: whiteAlpha(0.45),
             fontSize: "18px",
             cursor: "pointer",
             padding: "6px",

@@ -497,7 +497,7 @@ export default function PantheonWheel({
         {onOpenStory && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
             <button
-              onClick={() => onOpenStory("listen")}
+              onClick={() => onOpenStory(null)}
               style={{
                 background: `${goldAlpha(0.18)}`,
                 border: `1px solid ${goldAlpha(0.35)}`,
@@ -515,24 +515,7 @@ export default function PantheonWheel({
                 transition: "all 0.3s",
               }}
             >
-              <span style={{ fontSize: "16px" }}>&#9654;</span> Listen to the Story
-            </button>
-            <button
-              onClick={() => onOpenStory(null)}
-              style={{
-                background: "transparent",
-                border: `1px solid ${goldAlpha(0.15)}`,
-                color: goldAlpha(0.45),
-                fontFamily: fonts.heading,
-                fontSize: "10px",
-                letterSpacing: "3px",
-                textTransform: "uppercase",
-                padding: "8px 20px",
-                cursor: "pointer",
-                borderRadius: "8px",
-              }}
-            >
-              &#9733; Read Without Audio
+              &#9733; Enter the Story
             </button>
           </div>
         )}

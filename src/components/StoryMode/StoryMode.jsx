@@ -99,6 +99,10 @@ export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isM
       <StoryProgress
         completionPct={completionPct}
         onBackToWheel={() => onOpenWheel()}
+        hasNarration={!!narration}
+        isNarrating={isNarrating}
+        onToggleNarration={toggle}
+        isMobile={isMobile}
       />
 
       <StoryNav
