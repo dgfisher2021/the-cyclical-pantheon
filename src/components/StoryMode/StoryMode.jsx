@@ -61,7 +61,7 @@ export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isM
 
   const {
     playing, activePart, currentTime, globalTime, totalDuration,
-    toggle, seek, stop,
+    playbackRate, toggle, seek, stop, cycleRate,
   } = useNarration(narrationParts, handleChapterNarrationComplete);
 
   const isNarrating = playing || globalTime > 0;
@@ -128,9 +128,11 @@ export default function StoryMode({ initialChapterId, autoplay, onOpenWheel, isM
           globalTime={globalTime}
           totalDuration={totalDuration}
           chapterId={currentChapterId}
+          playbackRate={playbackRate}
           onToggle={toggle}
           onSeek={seek}
           onStop={stop}
+          onCycleRate={cycleRate}
           isMobile={isMobile}
         />
       )}

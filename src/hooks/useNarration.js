@@ -14,6 +14,7 @@ export function useNarration(parts, onChapterComplete) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [durations, setDurations] = useState([]);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const rafRef = useRef(null);
   const onCompleteRef = useRef(onChapterComplete);
   onCompleteRef.current = onChapterComplete;
@@ -120,6 +121,25 @@ export function useNarration(parts, onChapterComplete) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [playing, activePart]);
 
+  // Apply playback rate to all audio elements
+  useEffect(() => {
+    audiosRef.current.forEach((a) => {
+      a.playbackRate = playbackRate;
+    });
+  }, [playbackRate]);
+
+  const RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
+  const cycleRate = useCallback(() => {
+    setPlaybackRate((prev) => {
+      const idx = RATES.indexOf(prev);
+      const next = RATES[(idx + 1) % RATES.length];
+      audiosRef.current.forEach((a) => {
+        a.playbackRate = next;
+      });
+      return next;
+    });
+  }, []);
+
   const totalDuration = durations.reduce((a, b) => a + b, 0);
 
   const elapsedBefore = durations
@@ -179,8 +199,10 @@ export function useNarration(parts, onChapterComplete) {
     currentTime,
     globalTime,
     totalDuration,
+    playbackRate,
     toggle,
     seek,
     stop,
+    cycleRate,
   };
 }

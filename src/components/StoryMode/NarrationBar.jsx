@@ -16,9 +16,11 @@ export default function NarrationBar({
   globalTime,
   totalDuration,
   chapterId,
+  playbackRate,
   onToggle,
   onSeek,
   onStop,
+  onCycleRate,
   isMobile,
 }) {
   const pct = totalDuration > 0 ? (globalTime / totalDuration) * 100 : 0;
@@ -118,6 +120,28 @@ export default function NarrationBar({
         >
           {formatTime(globalTime)} / {formatTime(totalDuration)}
         </span>
+
+        {/* Speed button */}
+        <button
+          onClick={onCycleRate}
+          title="Playback speed"
+          style={{
+            background: playbackRate !== 1 ? goldAlpha(0.12) : "none",
+            border: `1px solid ${playbackRate !== 1 ? goldAlpha(0.25) : "transparent"}`,
+            color: playbackRate !== 1 ? goldAlpha(0.7) : goldAlpha(0.35),
+            fontFamily: fonts.heading,
+            fontSize: "10px",
+            letterSpacing: "1px",
+            cursor: "pointer",
+            padding: "3px 8px",
+            borderRadius: "2px",
+            flexShrink: 0,
+            minWidth: "38px",
+            textAlign: "center",
+          }}
+        >
+          {playbackRate}x
+        </button>
 
         {/* Stop button */}
         <button
