@@ -10,8 +10,6 @@ import { godByName } from "../../data/gods";
 import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
 import SectionDivider from "../shared/SectionDivider";
 import GodMention from "./GodMention";
-import NarrationPlayer from "./NarrationPlayer";
-import { useNarration } from "../../hooks/useNarration";
 import { narrationData } from "../../data/narrationTimestamps";
 
 const GOD_PATTERN =
@@ -90,11 +88,11 @@ function NarrationParagraph({ text, activeWordIndex, onOpenWheel, isNarrating })
         key={i}
         style={{
           color: isCurrent
-            ? "rgba(255,255,255,0.95)"
+            ? "rgba(255,255,255,1)"
             : spoken
-              ? "rgba(255,255,255,0.72)"
+              ? "rgba(255,255,255,0.85)"
               : isNarrating
-                ? "rgba(255,255,255,0.22)"
+                ? "rgba(255,255,255,0.25)"
                 : undefined,
           textShadow: isCurrent ? `0 0 8px ${goldAlpha(0.4)}` : undefined,
           transition: "color 0.15s, text-shadow 0.15s",
@@ -159,6 +157,7 @@ export default function StoryChapter({
   onOpenWheel,
   onMarkComplete,
   isMobile,
+  narrationState,
 }) {
   const chapter = chapters[chapterId];
   const content = storyChapters[chapterId];
@@ -168,12 +167,12 @@ export default function StoryChapter({
   const act = acts.find((a) => a.id === chapter.act);
   const isEpilogue = chapterId.startsWith("E");
 
-  // Narration support
+  // Narration state from parent (StoryMode)
+  const isNarrating = narrationState?.isNarrating || false;
+  const activePart = narrationState?.activePart ?? 0;
+  const currentTime = narrationState?.currentTime ?? 0;
+  const paraTimingMap = narrationState?.paraTimingMap || null;
   const narration = narrationData[chapterId];
-  const { playing, currentTime, duration, toggle, seek } = useNarration(
-    narration?.audioSrc || null,
-  );
-  const isNarrating = playing || currentTime > 0;
 
   // Build paragraph index mapping (skip breaks)
   const paraIndexMap = useMemo(() => {
@@ -192,18 +191,19 @@ export default function StoryChapter({
   // Auto-scroll to active paragraph
   const paraRefs = useRef({});
   useEffect(() => {
-    if (!isNarrating || !narration) return;
-    const paraTimes = narration.paragraphs;
-    const activeIdx = paraTimes.findIndex(
-      (p) => currentTime >= p.start && currentTime < p.end,
-    );
-    if (activeIdx >= 0 && paraRefs.current[activeIdx]) {
-      paraRefs.current[activeIdx].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+    if (!isNarrating || !paraTimingMap) return;
+    for (const [paraIdx, { partIdx, paraTime }] of paraTimingMap) {
+      if (partIdx === activePart && currentTime >= paraTime.start && currentTime < paraTime.end) {
+        if (paraRefs.current[paraIdx]) {
+          paraRefs.current[paraIdx].scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+        break;
+      }
     }
-  }, [isNarrating, narration, Math.floor(currentTime / 2)]);
+  }, [isNarrating, paraTimingMap, activePart, Math.floor(currentTime / 2)]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -389,24 +389,13 @@ export default function StoryChapter({
 
       <SectionDivider />
 
-      {/* Narration player */}
-      {narration && (
-        <NarrationPlayer
-          playing={playing}
-          currentTime={currentTime}
-          duration={duration}
-          onToggle={toggle}
-          onSeek={seek}
-        />
-      )}
-
       {/* Chapter content */}
       <div
         style={{
           fontFamily: fonts.body,
           fontSize: isMobile ? "18px" : "19px",
           lineHeight: isMobile ? "2.0" : "1.95",
-          color: whiteAlpha(0.72),
+          color: whiteAlpha(0.85),
         }}
       >
         {content.map((block, i) => {
@@ -414,13 +403,17 @@ export default function StoryChapter({
             return <SectionDivider key={i} />;
           }
 
-          // Check if this paragraph has narration timing
+          // Check if this paragraph has narration timing (multi-part)
           const pi = paraIndexMap?.get(i);
-          const paraTime = pi != null ? narration?.paragraphs[pi] : null;
+          const timing = pi != null ? paraTimingMap?.get(pi) : null;
+          const paraTime = timing?.paraTime || null;
+          const isActivePart = timing?.partIdx === activePart;
           const wordCount = block.text ? (block.text.match(/\S+/g) || []).length : 0;
-          const activeWord = isNarrating
+          const activeWord = isNarrating && isActivePart
             ? getActiveWordIndex(paraTime, currentTime, wordCount)
-            : -1;
+            : isNarrating && timing && timing.partIdx < activePart
+              ? wordCount // fully spoken in an earlier part
+              : -1;
           const useNarrationRender = isNarrating && paraTime;
 
           if (block.type === "italic") {
