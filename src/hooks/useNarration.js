@@ -5,21 +5,38 @@ import { useState, useRef, useEffect, useCallback } from "react";
  *
  * `parts` is an array of { audioSrc, paragraphs, startParagraph }.
  * Parts play sequentially — when one ends, the next starts automatically.
- *
- * Returns the currently active part index, current time within that part,
- * total duration across all parts, and combined progress for the seekbar.
+ * When all parts finish, `onChapterComplete` is called so the parent can
+ * auto-advance to the next chapter.
  */
-export function useNarration(parts) {
+export function useNarration(parts, onChapterComplete) {
   const audiosRef = useRef([]);
   const [activePart, setActivePart] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [durations, setDurations] = useState([]);
   const rafRef = useRef(null);
+  const onCompleteRef = useRef(onChapterComplete);
+  onCompleteRef.current = onChapterComplete;
 
-  // Create audio elements for all parts
+  // Track parts identity to detect chapter changes
+  const partsRef = useRef(parts);
+
+  // When parts change (new chapter), reset state and create new audio elements
   useEffect(() => {
-    if (!parts || parts.length === 0) return;
+    const wasPlaying = playing && partsRef.current !== parts;
+    partsRef.current = parts;
+
+    // Stop everything from previous chapter
+    audiosRef.current.forEach((a) => a.pause());
+    cancelAnimationFrame(rafRef.current);
+
+    if (!parts || parts.length === 0) {
+      audiosRef.current = [];
+      setDurations([]);
+      setActivePart(0);
+      setCurrentTime(0);
+      return;
+    }
 
     const audios = parts.map((p) => new Audio(p.audioSrc));
     audiosRef.current = audios;
@@ -36,13 +53,32 @@ export function useNarration(parts) {
       audio.addEventListener("loadedmetadata", onMeta);
     });
 
+    setActivePart(0);
+    setCurrentTime(0);
+
+    // If we were playing and switched chapters (auto-advance), start playing new chapter
+    if (wasPlaying) {
+      // Small delay to let audio load
+      const startTimer = setTimeout(() => {
+        if (audios[0]) {
+          audios[0].play().catch(() => {});
+          setPlaying(true);
+        }
+      }, 200);
+      return () => {
+        clearTimeout(startTimer);
+        audios.forEach((a) => a.pause());
+        cancelAnimationFrame(rafRef.current);
+      };
+    }
+
     return () => {
       audios.forEach((a) => a.pause());
       cancelAnimationFrame(rafRef.current);
     };
   }, [parts]);
 
-  // Handle end of part — advance to next or stop
+  // Handle end of part — advance to next part or signal chapter complete
   useEffect(() => {
     if (!parts || parts.length === 0) return;
 
@@ -50,16 +86,16 @@ export function useNarration(parts) {
     const handlers = audios.map((audio, i) => {
       const onEnded = () => {
         if (i < parts.length - 1) {
-          // Advance to next part
           setActivePart(i + 1);
           setCurrentTime(0);
           audios[i + 1].currentTime = 0;
           audios[i + 1].play();
         } else {
-          // All parts done
+          // All parts done — signal chapter complete
           setPlaying(false);
           setActivePart(0);
           setCurrentTime(0);
+          onCompleteRef.current?.();
         }
       };
       audio.addEventListener("ended", onEnded);
@@ -86,7 +122,6 @@ export function useNarration(parts) {
 
   const totalDuration = durations.reduce((a, b) => a + b, 0);
 
-  // Combined progress across all parts (for seekbar)
   const elapsedBefore = durations
     .slice(0, activePart)
     .reduce((a, b) => a + b, 0);
@@ -108,13 +143,11 @@ export function useNarration(parts) {
     (globalT) => {
       if (durations.length === 0) return;
 
-      // Find which part this global time falls in
       let cumulative = 0;
       for (let i = 0; i < durations.length; i++) {
         if (globalT < cumulative + durations[i] || i === durations.length - 1) {
           const localTime = Math.max(0, globalT - cumulative);
 
-          // If switching parts, pause old, set new
           if (i !== activePart) {
             audiosRef.current[activePart].pause();
             setActivePart(i);
@@ -133,6 +166,13 @@ export function useNarration(parts) {
     [durations, activePart, playing],
   );
 
+  const stop = useCallback(() => {
+    audiosRef.current[activePart]?.pause();
+    setPlaying(false);
+    setActivePart(0);
+    setCurrentTime(0);
+  }, [activePart]);
+
   return {
     playing,
     activePart,
@@ -141,5 +181,6 @@ export function useNarration(parts) {
     totalDuration,
     toggle,
     seek,
+    stop,
   };
 }

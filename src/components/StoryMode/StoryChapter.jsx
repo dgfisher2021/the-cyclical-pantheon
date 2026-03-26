@@ -10,8 +10,6 @@ import { godByName } from "../../data/gods";
 import { fonts, godColor, goldAlpha, whiteAlpha } from "../../styles/theme";
 import SectionDivider from "../shared/SectionDivider";
 import GodMention from "./GodMention";
-import NarrationPlayer from "./NarrationPlayer";
-import { useNarration } from "../../hooks/useNarration";
 import { narrationData } from "../../data/narrationTimestamps";
 
 const GOD_PATTERN =
@@ -159,6 +157,7 @@ export default function StoryChapter({
   onOpenWheel,
   onMarkComplete,
   isMobile,
+  narrationState,
 }) {
   const chapter = chapters[chapterId];
   const content = storyChapters[chapterId];
@@ -168,25 +167,12 @@ export default function StoryChapter({
   const act = acts.find((a) => a.id === chapter.act);
   const isEpilogue = chapterId.startsWith("E");
 
-  // Narration support — multi-part
+  // Narration state from parent (StoryMode)
+  const isNarrating = narrationState?.isNarrating || false;
+  const activePart = narrationState?.activePart ?? 0;
+  const currentTime = narrationState?.currentTime ?? 0;
+  const paraTimingMap = narrationState?.paraTimingMap || null;
   const narration = narrationData[chapterId];
-  const narrationParts = narration?.parts || null;
-  const { playing, activePart, currentTime, globalTime, totalDuration, toggle, seek } =
-    useNarration(narrationParts);
-  const isNarrating = playing || globalTime > 0;
-
-  // Build a lookup: paragraph index -> { partIdx, paraIdxInPart, paraTime }
-  const paraTimingMap = useMemo(() => {
-    if (!narrationParts) return null;
-    const map = new Map();
-    for (let pi = 0; pi < narrationParts.length; pi++) {
-      const part = narrationParts[pi];
-      part.paragraphs.forEach((paraTime, j) => {
-        map.set(part.startParagraph + j, { partIdx: pi, paraTime });
-      });
-    }
-    return map;
-  }, [narrationParts]);
 
   // Build paragraph index mapping (skip breaks)
   const paraIndexMap = useMemo(() => {
@@ -206,7 +192,6 @@ export default function StoryChapter({
   const paraRefs = useRef({});
   useEffect(() => {
     if (!isNarrating || !paraTimingMap) return;
-    // Find the active paragraph across all parts
     for (const [paraIdx, { partIdx, paraTime }] of paraTimingMap) {
       if (partIdx === activePart && currentTime >= paraTime.start && currentTime < paraTime.end) {
         if (paraRefs.current[paraIdx]) {
@@ -403,17 +388,6 @@ export default function StoryChapter({
       </div>
 
       <SectionDivider />
-
-      {/* Narration player */}
-      {narration && (
-        <NarrationPlayer
-          playing={playing}
-          currentTime={globalTime}
-          duration={totalDuration}
-          onToggle={toggle}
-          onSeek={seek}
-        />
-      )}
 
       {/* Chapter content */}
       <div
